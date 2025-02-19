@@ -1,0 +1,7 @@
+name = "SubspaceClustering"
+uuid = "bea3bcab-479e-4b6c-b047-c6cd33cd022c"
+authors = ["David Hong <hong@udel.edu> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1.10"
