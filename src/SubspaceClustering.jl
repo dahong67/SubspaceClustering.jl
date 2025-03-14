@@ -13,6 +13,9 @@ using Logging: @info
 using ProgressLogging: @progress
 using ArnoldiMethod: partialschur
 
+#Exports
+export polar, KSS
+
 #Polar function
 
 function polar(X)
