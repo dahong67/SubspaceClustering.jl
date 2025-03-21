@@ -1,34 +1,34 @@
 ## SubspaceClustering
 
 @testitem "polar function" begin
-    using Random
+    using StableRNGs
     using LinearAlgebra
 
     @testset "Small 2x2 matrix" begin
-        Random.seed!(0)
-        A = randn(2, 2)
+        rng = StableRNG(0)
+        A = randn(rng, 2, 2)
         Q = polar(A)
         @test isapprox(Q'* Q, I, atol=1e-10)
     end
 
 
     @testset "Rectangular (Tall) matrix" begin
-        Random.seed!(1)
-        A = randn(6, 4)
+        rng = StableRNG(1)  
+        A = randn(rng, 6, 4)
         Q = polar(A)
         @test isapprox(Q'* Q, I, atol=1e-10)
     end
 
     @testset "Rectangular (Wide) matrix" begin
-        Random.seed!(2)
-        A = randn(4, 6)
+        rng = StableRNG(2)  
+        A = randn(rng, 4, 6)
         Q = polar(A)
         @test isapprox(Q* Q', I, atol=1e-10)
     end
 
     @testset "Square matrix" begin
-        Random.seed!(3)
-        A = randn(4, 4)
+        rng = StableRNG(3)  
+        A = randn(rng, 4, 4)
         Q = polar(A)
         @test isapprox(Q'* Q, I, atol=1e-10)
     end
@@ -36,13 +36,13 @@
 end
 
 @testitem "KSS function" begin
-    using Random
+    using StableRNGs
     using LinearAlgebra
 
     @testset "Random Data with 2 Clusters with same subspace dimensions" begin
-        Random.seed!(0)
+        rng = StableRNG(0)
         D, N = 5, 20
-        X = randn(D, N)
+        X = randn(rng, D, N)
         d = [2, 2]
         U, c = KSS(X, d; niters=100)
 
@@ -57,9 +57,9 @@ end
     end
 
     @testset "Random Data with 3 Clusters with different subspace dimensions" begin
-        Random.seed!(1)
+        rng = StableRNG(1)
         D, N = 5, 20
-        X = randn(D, N)
+        X = randn(rng, D, N)
         d = [2, 3, 4]
         U, c = KSS(X, d; niters=100)
 
