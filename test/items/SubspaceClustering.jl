@@ -49,6 +49,31 @@ end
         @test isapprox(Q'* Q, I, atol=1e-10)
     end
 
+    @testset "Scaled Rotation" begin
+        theta = π/4
+        R = [cos(theta) -sin(theta); sin(theta) cos(theta)]
+        s = 3
+        A = s * R
+
+        Q = polar(A)
+        @test isapprox(Q, R, atol=1e-5)
+    end
+
+    @testset "Diagonal Matrix" begin
+        A = [ 3.0 0.0; 0.0 2.0]
+        Q = polar(A)
+
+        @test isapprox(Q, I(2), atol=1e-5)
+    end
+
+    @testset "Rectangular Polar Decomposition" begin
+        A = [2 0; 0 1; 0 0]
+        Q_exp = [1 0; 0 1; 0 0]
+        Q_comp = polar(A)
+
+        @test isapprox(Q_comp, Q_exp, atol=1e-5)
+    end
+
 end
 
 @testitem "KSS function" begin
