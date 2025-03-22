@@ -131,6 +131,15 @@ end
 
         @test isempty(findall(==(2), c))
     end
+
+    @testset "Subspace Dimensions > Feature space Dimensions" begin
+        rng = StableRNG(3)
+        X = randn(rng, 5, 20)
+        d = [6, 7]
+        U, c = KSS(X, d; niters=100)
+
+        @test_throws Subspace Dimension is greater than the feature space dimension KSS(X, d)
+    end
 end
 
 
