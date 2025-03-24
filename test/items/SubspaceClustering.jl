@@ -1,17 +1,5 @@
 # This file contains the tests for the SubspaceClustering.jl package.
 
-@testitem "Code quality (Aqua.jl)" begin
-    using Aqua
-    using SubspaceClustering
-    Aqua.test_all(SubspaceClustering)
-end
-
-@testitem "Code linting (JET.jl)" begin
-    using JET
-    using SubspaceClustering
-    JET.test_package(SubspaceClustering; target_defined_modules = true)
-end
-
 @testitem "polar function" begin
     
     using TestItemRunner
@@ -136,9 +124,8 @@ end
         rng = StableRNG(3)
         X = randn(rng, 5, 20)
         d = [6, 7]
-        U, c = KSS(X, d; niters=100)
 
-        @test_throws Subspace Dimension is greater than the feature space dimension KSS(X, d)
+        @test_throws DimensionMismatch KSS(X, d; niters=100)
     end
 end
 

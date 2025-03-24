@@ -50,6 +50,10 @@ function KSS(X, d; niters=100, Uinit=polar.(randn.(size(X, 1), collect(d))))
 	c = [argmax(norm(U[k]' * view(X, :, i)) for k in 1:K) for i in 1:N]
 	c_prev = copy(c)
 
+	if any(d_i -> d_i > D, d)
+		throw(DimensionMismatch("Subspace Dimensions are greater than Feature space Dimensions"))
+	end
+
 	# Iterations
 	@progress for t in 1:niters
 		# Update subspaces
