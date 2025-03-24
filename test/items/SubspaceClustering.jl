@@ -120,8 +120,25 @@ end
         @test isempty(findall(==(2), c))
     end
 
-    @testset "Subspace Dimensions > Feature space Dimensions" begin
+    @testset "Nontrivial Cluster case" begin
         rng = StableRNG(3)
+        D, N = 7, 20
+        d = [2, 3]
+        U1 = polar(randn(D, d[1]))
+        X1 = U1 * randn(rng, d[1], N)
+        U2 = polar(randn(D, d[2]))
+        X2 = U2 * randn(rng, d[2], N)
+        X = hcat(X1, X2)
+        U, c = KSS(X, d; niters=100)
+
+        for k in 1:length(d)
+            @test !isempty(findall(==(k), c))
+        end
+        
+    end
+
+    @testset "Subspace Dimensions > Feature space Dimensions" begin
+        rng = StableRNG(4)
         X = randn(rng, 5, 20)
         d = [6, 7]
 

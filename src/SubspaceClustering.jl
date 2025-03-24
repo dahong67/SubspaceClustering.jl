@@ -59,14 +59,15 @@ function KSS(X, d; niters=100, Uinit=polar.(randn.(size(X, 1), collect(d))))
 		# Update subspaces
 		for k in 1:K
 			ilist = findall(==(k), c)
-			# println("Cluster $k, ilist size: ", length(ilist))
+			@debug "Cluster $k, ilist size: $(length(ilist))"
+
 			if isempty(ilist)
 				@warn "Cluster $k is empty; re-initializing subspace."
 				U[k] = polar(randn(D, d[k]))
 			else
 				A = view(X, :, ilist) * transpose(view(X, :, ilist))
 				decomp, history = partialschur(A; nev=d[k], which=:LR)
-				@show history
+				@debug history
 				U[k] = decomp.Q
 			end
 		end
