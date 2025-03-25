@@ -8,7 +8,7 @@ module SubspaceClustering
 import LinearAlgebra: norm, svd, transpose
 import Base: copy, deepcopy, findall, view
 import Base:argmax
-using StableRNGs: randn
+using StableRNGs
 using Logging: @info, @warn
 using ProgressLogging: @progress
 using ArnoldiMethod: partialschur
@@ -24,7 +24,7 @@ function polar(X)
 end
 
 """
-	KSS(X, d; niters=100, Uinit=nothing)
+	KSS(X, d; niters=100, rng=StableRNG(1234), Uinit=polar.(randn.(rng, size(X, 1), collect(d))))
 
 Run K-subspaces on the data matrix `X`
 with subspace dimensions `d[1], ..., d[K]`.
@@ -35,13 +35,14 @@ with subspace dimensions `d[1], ..., d[K]`.
 
 # Keyword Arguments
 - `niters::Int=100`: Maximum number of iterations (default is 100).
--'Uinit::Union{Nothing, Vector{AbstractMatrix}}': Initial subspaces for the algorithm. If set to nothing, random subspaces are initialized.
+- `rng::StableRNG=StableRNG(1234)`: Random number generator.
+- 'Uinit::Vector{AbstractMatrix}': A vector of length 'K' containing initial subspace bases. If not provided, they are initialized randomly.
 
 # Returns
 - 'U::Vector{AbstractMatrix}': A vector of length `K` containing the subspace basis matrices for 'K' clusters.
 - 'c::Vector{Int}': A vector of length `N` containing the cluster assignments for each data point.
 """
-function KSS(X, d; niters=100, Uinit=polar.(randn.(size(X, 1), collect(d))))
+function KSS(X, d; niters=100, rng = StableRNG(1234), Uinit=polar.(randn.(rng, size(X, 1), collect(d))))
 	K = length(d)
 	D, N = size(X)
 
@@ -63,7 +64,7 @@ function KSS(X, d; niters=100, Uinit=polar.(randn.(size(X, 1), collect(d))))
 
 			if isempty(ilist)
 				@warn "Cluster $k is empty; re-initializing subspace."
-				U[k] = polar(randn(D, d[k]))
+				U[k] = polar(randn(rng, D, d[k]))
 			else
 				A = view(X, :, ilist) * transpose(view(X, :, ilist))
 				decomp, history = partialschur(A; nev=d[k], which=:LR)
