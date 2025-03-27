@@ -46,29 +46,35 @@ function KSS(X, d; niters=100, rng = StableRNG(1234), Uinit=polar.(randn.(rng, s
 	K = length(d)
 	D, N = size(X)
 
+	if any(d_i -> d_i > D, d)
+		throw(DimensionMismatch("Subspace Dimensions are greater than Feature space Dimensions"))
+	end
+
 	# Initialize
 	U = deepcopy(Uinit)
 	c = [argmax(norm(U[k]' * view(X, :, i)) for k in 1:K) for i in 1:N]
 	c_prev = copy(c)
 
-	if any(d_i -> d_i > D, d)
-		throw(DimensionMismatch("Subspace Dimensions are greater than Feature space Dimensions"))
-	end
+	
 
 	# Iterations
 	@progress for t in 1:niters
 		# Update subspaces
 		for k in 1:K
 			ilist = findall(==(k), c)
-			@debug "Cluster $k, ilist size: $(length(ilist))"
+			@debug "Cluster $k got assigned $(length(ilist)) data points"
 
 			if isempty(ilist)
-				@warn "Cluster $k is empty; re-initializing subspace."
+				@warn "Empty clusters detected at iteration $t - reinitializing the subspace. Consider reducing the number of clusters."
 				U[k] = polar(randn(rng, D, d[k]))
 			else
 				A = view(X, :, ilist) * transpose(view(X, :, ilist))
 				decomp, history = partialschur(A; nev=d[k], which=:LR)
-				@debug history
+				@debug "Cluster $k partialschur decomposition history:
+				matrix-vector products: $(history.mvproducts),
+				Number of eigenvalues: $(history.nev),
+				number of converged eigenvalues: $(history.nconverged),
+				converged? = $(history.converged)"
 				U[k] = decomp.Q
 			end
 		end
