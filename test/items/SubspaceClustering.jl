@@ -77,7 +77,7 @@ end
         D, N = 5, 20
         X = randn(rng, D, N)
         d = [2, 2]
-        U, c = KSS(X, d; niters=100)
+        U, c = KSS(X, d; niters=100, randng=rng)
 
         @test length(U) == length(d)
         @test length(c) == N
@@ -94,7 +94,7 @@ end
         D, N = 5, 20
         X = randn(rng, D, N)
         d = [2, 3, 4]
-        U, c = KSS(X, d; niters=100)
+        U, c = KSS(X, d; niters=100, randng=rng)
 
         @test length(U) == length(d)
         @test length(c) == N
@@ -111,11 +111,11 @@ end
         rng = StableRNG(2)
         D, N = 5, 20
         d = [2, 3]
-        U1 = polar(randn(D, d[1]))
+        U1 = polar(randn(rng, D, d[1]))
         X = U1 * randn(rng, 2, N)
-        U2 = polar(randn(D, d[2]))
+        U2 = polar(randn(rng, D, d[2]))
         Uinit = [U1, U2]
-        U, c = KSS(X, d; niters=100, Uinit=Uinit)
+        U, c = KSS(X, d; niters=100, randng=rng, Uinit=Uinit)
 
         @test isempty(findall(==(2), c))
     end
@@ -124,13 +124,19 @@ end
         rng = StableRNG(3)
         D, N = 7, 20
         d = [2, 3]
-        U1 = polar(randn(D, d[1]))
+        U1 = polar(randn(rng, D, d[1]))
         X1 = U1 * randn(rng, d[1], N)
-        U2 = polar(randn(D, d[2]))
+        U2 = polar(randn(rng, D, d[2]))
         X2 = U2 * randn(rng, d[2], N)
         X = hcat(X1, X2)
-        U, c = KSS(X, d; niters=100)
+        U, c = KSS(X, d; niters=100, randng=rng, Uinit=[U1, U2])
 
+        #Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
+        @test all(c[1:size(X1, 2)] .== 1)
+        @test all(c[size(X1, 2)+1:end] .== 2)
+
+
+        #Confirming clusters aren't empty
         for k in 1:length(d)
             @test !isempty(findall(==(k), c))
         end
@@ -142,7 +148,7 @@ end
         X = randn(rng, 5, 20)
         d = [6, 7]
 
-        @test_throws DimensionMismatch KSS(X, d; niters=100)
+        @test_throws DimensionMismatch KSS(X, d; niters=100, randng=rng)
     end
 end
 
