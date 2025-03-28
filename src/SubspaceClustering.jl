@@ -61,7 +61,13 @@ with subspace dimensions `d[1], ..., d[K]`.
 - 'U::Vector{AbstractMatrix}': A vector of length `K` containing the subspace basis matrices for 'K' clusters.
 - 'c::Vector{Int}': A vector of length `N` containing the cluster assignments for each data point.
 """
-function KSS(X, d; niters=100, randng = StableRNG(1234), Uinit = randsubspace(size(X, 1), d; rng=default_rng()))
+function KSS(X::AbstractMatrix{<:Real},                                                     #in: data matrix with size (D, N)
+			d::Vector{<:Integer};                                                           #in: a vector of subspace dimensions of length K
+			niters::Integer = 100,                                                          #in: number of iterations
+			randng::StableRNG = StableRNG(1234),                                            #in: a random number generator with StableRNG type
+			Uinit::Vector{Matrix{Float64}} = randsubspace(size(X, 1), d; rng=default_rng()) #in: a vector of length K containing initial subspaces
+			)                                  
+	
 	K = length(d)
 	D, N = size(X)
 
