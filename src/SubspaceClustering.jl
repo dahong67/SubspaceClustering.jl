@@ -43,6 +43,35 @@ function randsubspace(D::Int, d::Vector{Int}; rng::AbstractRNG=default_rng())
 end
 
 """
+	KSSResult{M<:AbstractMatrix{<:AbstractFloat}, T<:Real}
+
+The output of [`KSS`](@ref).
+
+#Type Parameters
+- `M<:AbstractMatrix{<:AbstractFloat}`: Type of the subspace basis matrices.
+- `T<:Real`: Type of the total cost of the clustering.
+
+
+# Fields
+- `U::Vector{M}`: Subspace bases for each cluster.
+- `c::Vector{Int}`: Cluster assignments for each data point.
+- `iterations::Int`: Number of iterations performed.
+- `totalcost::T`: Total cost of the clustering.
+- `counts::Vector{Int}`: Number of data points in each cluster.
+- `converged::Bool`: Convergence status.
+"""
+
+struct KSSResult{M<:AbstractMatrix{<:AbstractFloat}, T<:Real}
+	U::Vector{M} # Subspace bases for each cluster
+	c::Vector{Int} # Cluster assignments for each data point
+	iterations::Int # Number of iterations performed
+	totalcost::T # Total cost of the clustering
+	counts::Vector{Int} # Number of data points in each cluster
+	converged::Bool # Convergence status
+
+end
+
+"""
 	KSS(X, d; niters=100, randng=StableRNG(1234), Uinit=polar.(randn.(rng, size(X, 1), collect(d))))
 
 Run K-subspaces on the data matrix `X`
@@ -58,8 +87,12 @@ with subspace dimensions `d[1], ..., d[K]`.
 - 'Uinit::Vector{AbstractMatrix}': A vector of length 'K' containing initial subspace bases. If not provided, they are initialized randomly using randsubspace function.
 
 # Returns
+A `KSSResult` containing:
 - 'U::Vector{AbstractMatrix}': A vector of length `K` containing the subspace basis matrices for 'K' clusters.
 - 'c::Vector{Int}': A vector of length `N` containing the cluster assignments for each data point.
+- 'iterations::Int': Number of iterations performed.
+- 'totalcost::Real': Total cost of the clustering.
+- 'counts::Vector{Int}': A vector of length `K` containing the number of data points in each cluster.
 """
 function KSS(X::AbstractMatrix{<:Real},                                                     #in: data matrix with size (D, N)
 			d::Vector{<:Integer};                                                           #in: a vector of subspace dimensions of length K
@@ -79,6 +112,8 @@ function KSS(X::AbstractMatrix{<:Real},                                         
 	U = deepcopy(Uinit)
 	c = [argmax(norm(U[k]' * view(X, :, i)) for k in 1:K) for i in 1:N]
 	c_prev = copy(c)
+	converged = false
+	iter = niters # default to maximum iterations if no early convergence
 
 	
 
@@ -104,7 +139,7 @@ function KSS(X::AbstractMatrix{<:Real},                                         
 			end
 		end
 
-		# Update clusters
+		# Update clusters and calculate total cost
 		for i in 1:N
 			c[i] = argmax(norm(U[k]' * view(X, :, i)) for k in 1:K)
 		end
@@ -112,12 +147,26 @@ function KSS(X::AbstractMatrix{<:Real},                                         
 		# Break if clusters did not change, update otherwise
 		if c == c_prev
 			@info "Terminated early at iteration $t"
+			converged = true
+			iter = t
 			break
 		end
 		c_prev .= c
+
+		
 	end
 
-	return U, c
+	#Count data points in each cluster
+	counts = [count(x -> x == k, c) for k in 1:K]
+
+	# Calculate total cost
+	totalcost = 0
+	for i in 1:N
+		cost = norm(U[c[i]]' * view(X, :, i))
+		totalcost += cost
+	end
+
+	return KSSResult(U, c, iter, totalcost, counts, converged)
 end
 
 end
