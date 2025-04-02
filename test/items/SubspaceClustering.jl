@@ -77,7 +77,8 @@ end
         D, N = 5, 20
         X = randn(rng, D, N)
         d = [2, 2]
-        U, c = KSS(X, d; niters=100, randng=rng)
+        result = KSS(X, d; niters=100, randng=rng)
+        U, c = result.U, result.c
 
         @test length(U) == length(d)
         @test length(c) == N
@@ -94,7 +95,8 @@ end
         D, N = 5, 20
         X = randn(rng, D, N)
         d = [2, 3, 4]
-        U, c = KSS(X, d; niters=100, randng=rng)
+        result = KSS(X, d; niters=100, randng=rng)
+        U, c = result.U, result.c
 
         @test length(U) == length(d)
         @test length(c) == N
@@ -115,7 +117,8 @@ end
         X = U1 * randn(rng, 2, N)
         U2 = polar(randn(rng, D, d[2]))
         Uinit = [U1, U2]
-        U, c = KSS(X, d; niters=100, randng=rng, Uinit=Uinit)
+        result = KSS(X, d; niters=100, randng=rng, Uinit=Uinit)
+        U, c = result.U, result.c
 
         @test isempty(findall(==(2), c))
     end
@@ -129,7 +132,8 @@ end
         U2 = polar(randn(rng, D, d[2]))
         X2 = U2 * randn(rng, d[2], N)
         X = hcat(X1, X2)
-        U, c = KSS(X, d; niters=100, randng=rng, Uinit=[U1, U2])
+        result = KSS(X, d; niters=100, randng=rng, Uinit=[U1, U2])
+        U, c = result.U, result.c
 
         #Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
         @test all(c[1:size(X1, 2)] .== 1)
