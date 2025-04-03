@@ -24,24 +24,23 @@ export randsubspace, KSS
 """
 	randsubspace(D::Int, d::Vector{Int}; rng::AbstractRNG=default_rng())
 
-	Generate random d-dimensional subspaces. 
+Generate random d-dimensional subspaces. 
 
 # Arguments
 - `D::Int`: Dimension of the feature space.
-- `d::Vector{Int}`: Dimensions of the subspace.
+- `d::Int`: Dimensions of the subspace.
 - `rng::AbstractRNG=default_rng()`: Default global random number generator (RNG) with AbstractRNG type.
 
 # Returns
-A vector of matrices, each of size `(D, d_i)`, where `d_i` is the dimension of the i-th subspace.
+A matrix, each of size `(D, d)`.
 """
 
-function randsubspace(rng::AbstractRNG, D::Int, d::Vector{Int})
-	
-	return [randn(rng, D, d_i) |> (A -> begin
-		# Perform polar decomposition
-		U, _, V = svd(A)
-		U*V'
-	end) for d_i in d]
+function randsubspace(rng::AbstractRNG, D::Int, d::Int)
+
+	A = randn(rng, D, d)
+	# Perform polar decomposition
+	U, _, V = svd(A)
+	return U*V'
 
 end
 
@@ -98,11 +97,11 @@ A `KSSResult` containing:
 - `counts::Vector{Int}`: A vector of length `K` containing the number of data points in each cluster.
 - `converged::Bool`: Boolean value indicating whether the algorithm converged before reaching the maximum number of iterations.
 """
-function KSS(X::AbstractMatrix{<:Real},                                                             #in: data matrix with size (D, N)
-			d::Vector{<:Integer};                                                                   #in: a vector of subspace dimensions of length K
-			niters::Integer = 100,                                                                  #in: number of iterations
-			rng::AbstractRNG = default_rng(),                                                       #in: a random number generator with AbstractRNG type
-			Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = randsubspace(rng, size(X, 1), d)      #in: a vector of length K containing initial subspaces
+function KSS(X::AbstractMatrix{<:Real},                                                                                    #in: data matrix with size (D, N)
+			d::Vector{<:Integer};                                                                                          #in: a vector of subspace dimensions of length K
+			niters::Integer = 100,                                                                                         #in: number of iterations
+			rng::AbstractRNG = default_rng(),                                                                              #in: a random number generator with AbstractRNG type
+			Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = [randsubspace(rng, size(X, 1), d_i) for d_i in d]   #in: a vector of length K containing initial subspaces
 			)                                  
 	
 	K = length(d)
@@ -110,6 +109,10 @@ function KSS(X::AbstractMatrix{<:Real},                                         
 
 	if any(d_i -> d_i > D, d)
 		throw(DimensionMismatch("Subspace Dimensions are greater than Feature space Dimensions"))
+	end
+
+	if any(d_i -> d_i <= 0, d)
+		throw(ArgumentError("All subspace dimensions must be positive. Got: $d"))
 	end
 
 	# Initialize
@@ -130,7 +133,7 @@ function KSS(X::AbstractMatrix{<:Real},                                         
 
 			if isempty(ilist)
 				@warn "Empty clusters detected at iteration $t - reinitializing the subspace. Consider reducing the number of clusters."
-				U[k] = randsubspace(rng, D, [d[k]])[1]
+				U[k] = randsubspace(rng, D, d[k])
 			else
 				A = view(X, :, ilist) * transpose(view(X, :, ilist))
 				decomp, history = partialschur(A; nev=d[k], which=:LR)
