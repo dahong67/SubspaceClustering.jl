@@ -17,7 +17,13 @@ makedocs(;
         edit_link = "main",
         assets = String[],
     ),
-    pages = ["Home" => "index.md"],
+    pages=[
+        "Home" => "index.md",
+        "Manual" => [
+            "Overview" => "man/basics.md",
+            "Inputs" => "man/inputs.md",
+        ]
+    ],
 )
 
 deploydocs(; repo = "github.com/dahong67/SubspaceClustering.jl", devbranch = "main")
