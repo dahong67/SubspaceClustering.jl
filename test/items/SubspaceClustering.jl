@@ -101,13 +101,13 @@ end
 
         U1 = randsubspace(rng, D, d[1])
         U2 = randsubspace(rng, D, d[2])
-        X = hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) + 0.01 * randn(rng, D, N)
+        X = hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) + 0.01 * randn(rng, D, 2N)
         result = KSS(X, d; Uinit=[U1, U2])
         U, c = result.U, result.c
 
         #Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
-        @test all(c[1:size(X1, 2)] .== 1)
-        @test all(c[size(X1, 2)+1:end] .== 2)
+        @test all(c[1:N] .== 1)
+        @test all(c[N+1:end] .== 2)
 
 
         #Confirming clusters aren't empty
@@ -117,20 +117,33 @@ end
         
     end
 
-    @testset "Subspace Dimensions > Feature space Dimensions" begin
-        rng = StableRNG(4)
-        X = randn(rng, 5, 20)
-        d = [6, 7]
+    @testset "Argument Checks" begin
 
-        @test_throws DimensionMismatch KSS(X, d)
+        @testset "Subspace Dimensions > Feature space Dimensions" begin
+            rng = StableRNG(4)
+            X = randn(rng, 5, 20)
+            d = [6, 7]
+    
+            @test_throws DimensionMismatch KSS(X, d)
+        end
+        
+        @testset "Invalid Subspace Dimensions" begin
+            rng = StableRNG(5)
+            X = randn(rng, 5, 40)
+            d = [0, -1]
+            @test_throws ArgumentError KSS(X, d)
+        end
+
+        @testset "Invalid Number of Iterations" begin
+            rng = StableRNG(6)
+            X = randn(rng, 5, 40)
+            d = [2, 3]
+            @test_throws ArgumentError KSS(X, d; niters=0)
+        end
+
     end
 
-    @testset "Invalid Subspace Dimensions" begin
-        rng = StableRNG(5)
-        X = randn(rng, 5, 40)
-        d = [0, -1]
-        @test_throws ArgumentError KSS(X, d)
-    end
+
 end
 
 

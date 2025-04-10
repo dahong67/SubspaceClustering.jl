@@ -157,6 +157,10 @@ function KSS!(X::AbstractMatrix{<:Real},                #in: data matrix with si
 			
 		D = size(X, 1) #Feature space dimension
 
+		if niters <= 0
+			throw(ArgumentError("Number of iterations must be positive. Got: $niters"))
+		end
+
 		if any(d_i -> d_i > D, d)
 			throw(DimensionMismatch("Subspace Dimensions are greater than Feature space Dimensions"))
 		end
