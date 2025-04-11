@@ -88,7 +88,7 @@ end
         U1 = randsubspace(rng, D, d[1])
         X = U1 * randn(rng, d[1], N)
         U2 = randsubspace(rng, D, d[2])
-        result = KSS(X, d; Uinit=[U1, U2])
+        result = KSS!(X, d, [U1, U2])
         U, c = result.U, result.c
 
         @test isempty(findall(==(2), c))
@@ -102,7 +102,7 @@ end
         U1 = randsubspace(rng, D, d[1])
         U2 = randsubspace(rng, D, d[2])
         X = hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) + 0.01 * randn(rng, D, 2N)
-        result = KSS(X, d; Uinit=[U1, U2])
+        result = KSS!(X, d, [U1, U2])
         U, c = result.U, result.c
 
         #Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2

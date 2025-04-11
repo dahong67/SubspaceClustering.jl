@@ -50,15 +50,13 @@ Don't worry if it takes a few minutes to complete.
 
 Let's create a simple 2-D data matrix and apply KSS function. 
 ```@repl quickstart
-julia> using StableRNGs, Random
+using Random
 
-julia> using SubspaceClustering
+using SubspaceClustering
 
-julia> rng = StableRNG(123)
+X = randn(7, 80)
 
-julia> X = randn(rng, 7, 80)
-
-julia> result = KSS(X, [2, 3])
+result = KSS(X, [2, 3])
 ```
 
 The result of a **KSS** call is a `KSSResult` struct containing:
@@ -73,16 +71,16 @@ The result of a **KSS** call is a `KSSResult` struct containing:
 We can extract each part of the result as follows: 
 
 ```@repl quickstart
-julia> result.U           #2-element vector
+result.U           
 
-julia> result.c           # e.g. [1, 2, ...]
+result.c           
 
-julia> result.iterations  # e.g. 7
+result.iterations  
 
-julia> result.totalcost   # e.g. 164.577..
+result.totalcost   
 
-julia> result.counts      # e.g. [25, 55]
+result.counts      
 
-julia> result.converged   # e.g. true
+result.converged   
 ```
 

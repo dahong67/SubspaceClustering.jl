@@ -73,13 +73,14 @@ struct KSSResult{M<:AbstractMatrix{<:AbstractFloat}, T<:Real}
 
 end
 
+const KSS_default_iters = 100
+const KSS_default_rng = default_rng()
 
-
-function _KSS!(X::AbstractMatrix{<:Real},                                                                                     #in: data matrix with size (D, N)
-			   d::Vector{<:Integer},                                                                                          #in: a vector of subspace dimensions of length K
-			   U::Vector{<:AbstractMatrix{<:Real}},                                                                           #in: a vector of length K containing initial subspaces
-			   niters::Integer,                                                                                               #in: number of iterations
-			   rng::AbstractRNG                                                                                               #in: a random number generator with AbstractRNG type
+function _KSS!(X::AbstractMatrix{<:Real},                                    #in: data matrix with size (D, N)
+			   d::Vector{<:Integer},                                         #in: a vector of subspace dimensions of length K
+			   U::Vector{<:AbstractMatrix{<:Real}},                          #in: a vector of length K containing initial subspaces
+			   niters::Integer,                                              #in: number of iterations
+			   rng::AbstractRNG                                              #in: a random number generator with AbstractRNG type
 			   )                                  
 	
 	
@@ -151,8 +152,8 @@ end
 function KSS!(X::AbstractMatrix{<:Real},                #in: data matrix with size (D, N)
 			  d::Vector{<:Integer},                     #in: a vector of subspace dimensions of length K
 			  U::Vector{<:AbstractMatrix{<:Real}};      #in: a vector of length K containing initial subspaces
-			  niters::Integer,                          #in: number of iterations
-			  rng::AbstractRNG = default_rng()          #in: a random number generator with AbstractRNG type
+			  niters::Integer = KSS_default_iters,      #in: maximum number of iterations
+			  rng::AbstractRNG = KSS_default_rng        #in: a random number generator with AbstractRNG type
 			  )
 			
 		D = size(X, 1) #Feature space dimension
@@ -183,22 +184,28 @@ Run K-subspaces on the data matrix `X` with subspace dimensions `d[1], ..., d[K]
 - `d::Vector{Int}`: A vector of length `K` containing the subspace dimensions for each of the 'K' subspaces.
 
 # Keyword Arguments
-- `niters::Int=100`: Maximum number of iterations (default is 100).
-- `randng::AbstractRNG=default_rng()`: Random Number generator with AbstractRNG type.
+- `niters::Int=KSS_default_iters`: Maximum number of iterations (default value is defined by `KSS_default_iters`).
+- `rng::AbstractRNG=KSS_default_rng`: Random Number generator with AbstractRNG type (default value is defined by `KSS_default_rng`).
 - `Uinit::Vector{AbstractMatrix}`: A vector of length `K` containing initial subspace bases. If not provided, they are initialized randomly via `randsubspace`.
 
 # Returns
-A [`KSSResult`](@ref KSSResult)
+A [`KSSResult`](@ref KSSResult) struct containing the clustering result including:
+	- The computed subspace bases `U`.
+	- The cluster assignments `c`.
+	- The number of iterations performed `iterations`.
+	- The total cost of the clustering `totalcost`.
+	- The number of data points in each cluster `counts`.
+	- The convergence status `converged`.
 """
 
 function KSS(X::AbstractMatrix{<:Real},                                                                             #in: data matrix with size (D, N)
 		     d::Vector{<:Integer};                                                                                  #in: a vector of subspace dimensions of length K
-			 niters::Integer = 100,                                                                                 #in: number of iterations
-			 rng::AbstractRNG = default_rng(),                                                                      #in: a random number generator with AbstractRNG type
+			 niters::Integer = KSS_default_iters,                                                                   #in: maximum number of iterations
+			 rng::AbstractRNG = KSS_default_rng,                                                                    #in: a random number generator with AbstractRNG type
 			 Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = [randsubspace(rng, size(X, 1), d_i) for d_i in d]    #in: a vector of length K containing initial subspaces
 			 )
     U = deepcopy(Uinit)
-    return KSS!(X, d, U; niters=niters, rng=rng)
+    return KSS!(X, d, U; niters, rng)
 end
 
 
