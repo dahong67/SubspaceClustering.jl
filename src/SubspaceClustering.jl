@@ -76,10 +76,10 @@ end
 const KSS_default_iters = 100
 const KSS_default_rng = default_rng()
 
-function _KSS!(X::AbstractMatrix{<:Real},                                    #in: data matrix with size (D, N)
-			   d::Vector{<:Integer},                                         #in: a vector of subspace dimensions of length K
-			   U::Vector{<:AbstractMatrix{<:Real}},                          #in: a vector of length K containing initial subspaces
-			   niters::Integer,                                              #in: number of iterations
+function _KSS!(X::Matrix{Float64},                                    #in: data matrix with size (D, N)
+			   d::Vector{Int64},                                         #in: a vector of subspace dimensions of length K
+			   U::Vector{Matrix{Float64}},                          #in: a vector of length K containing initial subspaces
+			   niters::Int64,                                              #in: number of iterations
 			   rng::AbstractRNG                                              #in: a random number generator with AbstractRNG type
 			   )                                  
 	
@@ -141,37 +141,27 @@ function _KSS!(X::AbstractMatrix{<:Real},                                    #in
 	# Calculate total cost
 	totalcost = 0
 	for i in 1:N
-		cost = norm(U[c[i]]' * view(X, :, i))
-		totalcost += cost
+		totalcost += norm(U[c[i]]' * view(X, :, i))
 	end
 
 	return KSSResult(U, c, iter, totalcost, counts, converged)
 end
 
 
-function KSS!(X::AbstractMatrix{<:Real},                #in: data matrix with size (D, N)
+function KSS!(X::AbstractMatrix{T},                #in: data matrix with size (D, N)
 			  d::Vector{<:Integer},                     #in: a vector of subspace dimensions of length K
-			  U::Vector{<:AbstractMatrix{<:Real}};      #in: a vector of length K containing initial subspaces
+			  U::Vector{M};      #in: a vector of length K containing initial subspaces
 			  niters::Integer = KSS_default_iters,      #in: maximum number of iterations
 			  rng::AbstractRNG = KSS_default_rng        #in: a random number generator with AbstractRNG type
-			  )
+			  ) where {T<:Real, M<:AbstractMatrix{T}}
 			
-		D = size(X, 1) #Feature space dimension
-
-		if niters <= 0
-			throw(ArgumentError("Number of iterations must be positive. Got: $niters"))
-		end
-
-		if any(d_i -> d_i > D, d)
-			throw(DimensionMismatch("Subspace Dimensions are greater than Feature space Dimensions"))
-		end
-	
-		if any(d_i -> d_i <= 0, d)
-			throw(ArgumentError("All subspace dimensions must be positive. Got: $d"))
-		end
-
+	D = size(X, 1) #Feature space dimension
+	niters > 0 || throw(ArgumentError("Number of iterations must be positive. Got: $niters"))
+	all(d_i -> d_i <= D, d) || throw(DimensionMismatch("Subspace Dimensions are greater than Feature space Dimensions"))
+	all(d_i -> d_i >= 0, d) || throw(ArgumentError("All subspace dimensions must be positive. Got: $d"))
 
 	return _KSS!(X, d, U, niters, rng)
+	
 end
 
 """
@@ -198,13 +188,14 @@ A [`KSSResult`](@ref KSSResult) struct containing the clustering result includin
 	- The convergence status `converged`.
 """
 
-function KSS(X::AbstractMatrix{<:Real},                                                                             #in: data matrix with size (D, N)
+function KSS(X::AbstractMatrix{T},                                                                             #in: data matrix with size (D, N)
 		     d::Vector{<:Integer};                                                                                  #in: a vector of subspace dimensions of length K
 			 niters::Integer = KSS_default_iters,                                                                   #in: maximum number of iterations
 			 rng::AbstractRNG = KSS_default_rng,                                                                    #in: a random number generator with AbstractRNG type
-			 Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = [randsubspace(rng, size(X, 1), d_i) for d_i in d]    #in: a vector of length K containing initial subspaces
-			 )
+			 Uinit::Vector{M} = [randsubspace(rng, size(X, 1), d_i) for d_i in d]    #in: a vector of length K containing initial subspaces
+			 ) where {T<:Real, M<:AbstractMatrix{T}}
     U = deepcopy(Uinit)
+
     return KSS!(X, d, U; niters, rng)
 end
 
