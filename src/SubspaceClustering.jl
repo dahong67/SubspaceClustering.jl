@@ -20,13 +20,13 @@ include("algorithms/kss.jl")
     randsubspace([rng=default_rng()], [T=Float64], D, d)
 
 Generate a random `d`-dimensional subspace of `ℝᴰ`
-and return a basis matrix with element type `T<:Real`.
+and return a basis matrix with element type `T<:AbstractFloat`.
 
 See also [`randsubspace!`](@ref)
 """
-randsubspace(rng::AbstractRNG, ::Type{T}, D::Integer, d::Integer) where {T<:Real} =
+randsubspace(rng::AbstractRNG, ::Type{T}, D::Integer, d::Integer) where {T<:AbstractFloat} =
     randsubspace!(rng, Array{T}(undef, D, d))
-randsubspace(::Type{T}, D::Integer, d::Integer) where {T<:Real} =
+randsubspace(::Type{T}, D::Integer, d::Integer) where {T<:AbstractFloat} =
     randsubspace(default_rng(), T, D, d)
 randsubspace(rng::AbstractRNG, D::Integer, d::Integer) = randsubspace(rng, Float64, D, d)
 randsubspace(D::Integer, d::Integer) = randsubspace(default_rng(), Float64, D, d)
@@ -41,7 +41,8 @@ See also [`randsubspace`](@ref)
 """
 function randsubspace!(rng::AbstractRNG, U::AbstractMatrix)
     # Check arguments
-    eltype(U) <: Real || throw(ArgumentError("Basis matrix `U` must have real elements."))
+    eltype(U) <: AbstractFloat ||
+        throw(ArgumentError("Basis matrix `U` must have real (floating point) elements."))
     size(U, 2) <= size(U, 1) || throw(
         ArgumentError(
             "Subspace dimension `d` cannot be greater than the ambient dimension `D`.",
