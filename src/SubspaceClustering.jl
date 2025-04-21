@@ -17,7 +17,7 @@ include("algorithms/kss.jl")
 
 # Utility functions
 """
-	randsubspace(D::Int, d::Vector{Int}; rng::AbstractRNG=default_rng())
+    randsubspace(D::Int, d::Vector{Int}; rng::AbstractRNG=default_rng())
 
 Generate random d-dimensional subspaces. 
 

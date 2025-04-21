@@ -1,7 +1,7 @@
 ## Algorithm: KSS
 
 """
-	KSSResult{M<:AbstractMatrix{<:AbstractFloat}, T<:Real}
+    KSSResult{M<:AbstractMatrix{<:AbstractFloat}, T<:Real}
 
 The output of K-subspaces clustering algorithm.
 
@@ -115,7 +115,7 @@ function KSS!(
 end
 
 """
-	KSS(X, d; niters=100, rng::AbstractRNG = default_rng(), Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = [randsubspace(rng, size(X, 1), d_i) for d_i in d])
+    KSS(X, d; niters=100, rng::AbstractRNG = default_rng(), Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = [randsubspace(rng, size(X, 1), d_i) for d_i in d])
 
 Run K-subspaces on the data matrix `X` with subspace dimensions `d[1], ..., d[K]`.
 
@@ -130,12 +130,12 @@ Run K-subspaces on the data matrix `X` with subspace dimensions `d[1], ..., d[K]
 
 # Returns
 A [`KSSResult`](@ref KSSResult) struct containing the clustering result including:
-	- The computed subspace bases `U`.
-	- The cluster assignments `c`.
-	- The number of iterations performed `iterations`.
-	- The total cost of the clustering `totalcost`.
-	- The number of data points in each cluster `counts`.
-	- The convergence status `converged`.
+    - The computed subspace bases `U`.
+    - The cluster assignments `c`.
+    - The number of iterations performed `iterations`.
+    - The total cost of the clustering `totalcost`.
+    - The number of data points in each cluster `counts`.
+    - The convergence status `converged`.
 """
 
 function KSS(
