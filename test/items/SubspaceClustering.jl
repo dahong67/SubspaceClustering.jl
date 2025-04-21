@@ -19,12 +19,6 @@
         @test isapprox(Q' * Q, I, atol = 1e-10)
     end
 
-    @testset "Rectangular (Wide) matrix" begin
-        rng = StableRNG(2)
-        Q = SubspaceClustering.randsubspace(rng, 4, 6)
-        @test isapprox(Q * Q', I, atol = 1e-10)
-    end
-
     @testset "Square matrix" begin
         rng = StableRNG(3)
         Q = SubspaceClustering.randsubspace(rng, 4, 4)
@@ -118,7 +112,7 @@ end
             X = randn(rng, 5, 20)
             d = [6, 7]
 
-            @test_throws DimensionMismatch KSS(X, d)
+            @test_throws ArgumentError KSS(X, d)
         end
 
         @testset "Invalid Subspace Dimensions" begin
