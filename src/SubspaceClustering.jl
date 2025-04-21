@@ -1,24 +1,15 @@
 module SubspaceClustering
 
-# Write your package code here.
-
-## K-Subspaces SubspaceClustering
-
-#Imports
-import LinearAlgebra: norm, svd, transpose
-import Base: copy, deepcopy, findall, view
-import Base: argmax
-import Random: default_rng, AbstractRNG
-using StableRNGs
+# Imports
+using ArnoldiMethod: partialschur
 using Compat
+using LinearAlgebra: norm, svd, transpose
 using Logging: @info, @warn
 using ProgressLogging: @progress
-using ArnoldiMethod: partialschur
+using Random: default_rng, AbstractRNG
 
-#Exports
-export randsubspace, KSS, KSS!
-
-#Public function
+# Exports
+export KSS, KSS!
 @compat public randsubspace
 
 """

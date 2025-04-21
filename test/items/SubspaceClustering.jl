@@ -9,25 +9,25 @@
 
     @testset "Small 2x2 matrix" begin
         rng = StableRNG(0)
-        Q = randsubspace(rng, 2, 2)
+        Q = SubspaceClustering.randsubspace(rng, 2, 2)
         @test isapprox(Q' * Q, I, atol = 1e-10)
     end
 
     @testset "Rectangular (Tall) matrix" begin
         rng = StableRNG(1)
-        Q = randsubspace(rng, 6, 4)
+        Q = SubspaceClustering.randsubspace(rng, 6, 4)
         @test isapprox(Q' * Q, I, atol = 1e-10)
     end
 
     @testset "Rectangular (Wide) matrix" begin
         rng = StableRNG(2)
-        Q = randsubspace(rng, 4, 6)
+        Q = SubspaceClustering.randsubspace(rng, 4, 6)
         @test isapprox(Q * Q', I, atol = 1e-10)
     end
 
     @testset "Square matrix" begin
         rng = StableRNG(3)
-        Q = randsubspace(rng, 4, 4)
+        Q = SubspaceClustering.randsubspace(rng, 4, 4)
         @test isapprox(Q' * Q, I, atol = 1e-10)
     end
 end
@@ -80,9 +80,9 @@ end
         rng = StableRNG(2)
         D, N = 5, 20
         d = [2, 3]
-        U1 = randsubspace(rng, D, d[1])
+        U1 = SubspaceClustering.randsubspace(rng, D, d[1])
         X = U1 * randn(rng, d[1], N)
-        U2 = randsubspace(rng, D, d[2])
+        U2 = SubspaceClustering.randsubspace(rng, D, d[2])
         result = KSS!(X, d, [U1, U2])
         U, c = result.U, result.c
 
@@ -94,8 +94,8 @@ end
         D, N = 7, 20
         d = [2, 3]
 
-        U1 = randsubspace(rng, D, d[1])
-        U2 = randsubspace(rng, D, d[2])
+        U1 = SubspaceClustering.randsubspace(rng, D, d[1])
+        U2 = SubspaceClustering.randsubspace(rng, D, d[2])
         X =
             hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) +
             0.01 * randn(rng, D, 2N)
