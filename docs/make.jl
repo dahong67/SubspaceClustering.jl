@@ -17,13 +17,10 @@ makedocs(;
         edit_link = "main",
         assets = String[],
     ),
-    pages=[
+    pages = [
         "Home" => "index.md",
         "Qucik start guide" => "quickstart.md",
-        "Manual" => [
-            "Overview" => "man/basics.md",
-            "Inputs" => "man/inputs.md",
-        ]
+        "Manual" => ["Overview" => "man/basics.md", "Inputs" => "man/inputs.md"],
     ],
 )
 
