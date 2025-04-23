@@ -26,7 +26,7 @@
     end
 end
 
-@testitem "KSS function" begin
+@testitem "kss function" begin
     using TestItemRunner
     using StableRNGs
     using LinearAlgebra
@@ -38,7 +38,7 @@ end
         D, N = 5, 20
         X = randn(rng, D, N)
         d = [2, 2]
-        result = KSS(X, d)
+        result = kss(X, d)
         U, c = result.U, result.c
 
         @test length(U) == length(d)
@@ -56,7 +56,7 @@ end
         D, N = 5, 20
         X = randn(rng, D, N)
         d = [2, 3, 4]
-        result = KSS(X, d)
+        result = kss(X, d)
         U, c = result.U, result.c
 
         @test length(U) == length(d)
@@ -77,7 +77,7 @@ end
         U1 = SubspaceClustering.randsubspace(rng, D, d[1])
         X = U1 * randn(rng, d[1], N)
         U2 = SubspaceClustering.randsubspace(rng, D, d[2])
-        result = KSS(X, d; Uinit = [U1, U2])
+        result = kss(X, d; Uinit = [U1, U2])
         U, c = result.U, result.c
 
         @test isempty(findall(==(2), c))
@@ -93,7 +93,7 @@ end
         X =
             hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) +
             0.01 * randn(rng, D, 2N)
-        result = KSS(X, d; Uinit = [U1, U2])
+        result = kss(X, d; Uinit = [U1, U2])
         U, c = result.U, result.c
 
         #Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
@@ -112,21 +112,21 @@ end
             X = randn(rng, 5, 20)
             d = [6, 7]
 
-            @test_throws ArgumentError KSS(X, d)
+            @test_throws ArgumentError kss(X, d)
         end
 
         @testset "Invalid Subspace Dimensions" begin
             rng = StableRNG(5)
             X = randn(rng, 5, 40)
             d = [0, -1]
-            @test_throws ArgumentError KSS(X, d)
+            @test_throws ArgumentError kss(X, d)
         end
 
         @testset "Invalid Number of Iterations" begin
             rng = StableRNG(6)
             X = randn(rng, 5, 40)
             d = [2, 3]
-            @test_throws ArgumentError KSS(X, d; niters = 0)
+            @test_throws ArgumentError kss(X, d; niters = 0)
         end
     end
 end

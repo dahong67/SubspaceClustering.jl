@@ -9,7 +9,7 @@ using ProgressLogging: @progress
 using Random: default_rng, randn!, AbstractRNG
 
 # Exports
-export KSS
+export kss
 @compat public randsubspace
 
 # Algorithms

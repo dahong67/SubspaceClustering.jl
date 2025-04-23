@@ -31,7 +31,7 @@ end
 
 # Main function
 """
-    KSS(X, d; niters=100, rng::AbstractRNG = default_rng(), Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = [randsubspace(rng, size(X, 1), d_i) for d_i in d])
+    kss(X, d; niters=100, rng::AbstractRNG = default_rng(), Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = [randsubspace(rng, size(X, 1), d_i) for d_i in d])
 
 Run K-subspaces on the data matrix `X` with subspace dimensions `d[1], ..., d[K]`.
 
@@ -53,7 +53,7 @@ A [`KSSResult`](@ref KSSResult) struct containing the clustering result includin
     - The number of data points in each cluster `counts`.
     - The convergence status `converged`.
 """
-function KSS(
+function kss(
     X::AbstractMatrix{T},                                                                             #in: data matrix with size (D, N)
     d::Vector{<:Integer};                                                                                  #in: a vector of subspace dimensions of length K
     niters::Integer = 100,                                                                   #in: maximum number of iterations
