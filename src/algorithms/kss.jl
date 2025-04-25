@@ -44,7 +44,7 @@ into `K` clusters via the **K**-**s**ub**s**paces (KSS) algorithm
 with corresponding subspace dimensions `d[1],...,d[K]`.
 Output is a [`KSSResult`](@ref) containing the resulting
 cluster assignments `c[1],...,c[N]`,
-subspace bases `U[1],...,U[K]`,
+subspace basis matrices `U[1],...,U[K]`,
 and metadata about the algorithm run.
 
 KSS seeks to cluster data points by their subspace
@@ -53,7 +53,7 @@ by minimizing the following total cost
 \\sum_{i=1}^N \\| X[:, i] - U[c[i]] * U[c[i]]' X[:, i] \\|_2^2
 ```
 with respect to the cluster assignments `c[1],...,c[N]`
-and subspace bases `U[1],...,U[K]`.
+and subspace basis matrices `U[1],...,U[K]`.
 
 # Keyword arguments
 - `maxiters::Integer = 100`: maximum number of iterations
@@ -61,7 +61,8 @@ and subspace bases `U[1],...,U[K]`.
     (used when reinitializing the subspace for an empty cluster)
 - `Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}}
     = [randsubspace(rng, size(X, 1), di) for di in d]`:
-    vector of `K` initial subspace bases to use (each `Uinit[k]` should be `D×d[k]`)
+    vector of `K` initial subspace basis matrices to use
+    (each `Uinit[k]` should be `D×d[k]`)
 
 See also [`KSSResult`](@ref).
 """
@@ -131,7 +132,7 @@ function kss(
 
         # Check for convergence
         if cprev == c
-            @info "Converged after $iterations iteration."
+            @info "Converged after $iterations $(iterations == 1 ? "iteration" : "iterations")."
             converged = true
         end
         copyto!(cprev, c)
