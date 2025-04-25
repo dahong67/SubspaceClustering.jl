@@ -131,7 +131,7 @@ and return a vector of the assignments.
 
 See also [`kss_assign_clusters!`](@ref), [`kss`](@ref).
 """
-kss_assign_clusters(U, X) = kss_assign_clusters!(Vector{Int}(undef, size(X, 2)), U, X)
+kss_assign_clusters(U, X) = kss_assign_clusters!(similar(Vector{Int}, (axes(X, 2),)), U, X)
 
 """
     kss_assign_clusters!(c, U, X)
@@ -143,10 +143,8 @@ and return this vector of assignments.
 See also [`kss_assign_clusters`](@ref), [`kss`](@ref).
 """
 function kss_assign_clusters!(c, U, X)
-    N = length(c)
-    K = length(U)
-    for i in 1:N
-        c[i] = argmax(norm(U[k]' * view(X, :, i)) for k in 1:K)
+    for (i, xi) in pairs(eachcol(X))
+        c[i] = argmax(norm(U[k]' * xi) for k in eachindex(U))
     end
     return c
 end
