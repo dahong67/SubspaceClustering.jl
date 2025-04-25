@@ -6,10 +6,10 @@ using Compat
 using LinearAlgebra: mul!, norm, svd!
 using Logging: @info, @warn
 using ProgressLogging: @withprogress, @logprogress
-using Random: default_rng, randn!, AbstractRNG
+using Random: AbstractRNG, default_rng, randn!
 
 # Exports
-export kss, KSSResult
+export KSSResult, kss
 @compat public randsubspace
 
 # Algorithms
