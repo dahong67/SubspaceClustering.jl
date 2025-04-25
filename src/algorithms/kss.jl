@@ -81,7 +81,6 @@ function kss(
     # Extract sizes and check that they agree
     K = (only ∘ unique)([length(d), length(Uinit)])
     D = (only ∘ unique)([size(X, 1); size.(Uinit, 1)])
-    N = size(X, 2)
 
     # Check subspace dimensions
     for k in 1:K
