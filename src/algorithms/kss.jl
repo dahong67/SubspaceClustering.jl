@@ -76,7 +76,7 @@ function kss(
     K = length(d)
     D, N = size(X)
 
-    c = [argmax(norm(U[k]' * view(X, :, i)) for k in 1:K) for i in 1:N]
+    c = kss_assign_clusters(U, X)
     c_prev = copy(c)
     converged = false
     iter = niters # default to maximum iterations if no early convergence
@@ -92,21 +92,12 @@ function kss(
                 @warn "Empty clusters detected at iteration $t - reinitializing the subspace. Consider reducing the number of clusters."
                 U[k] = randsubspace(rng, D, d[k])
             else
-                A = view(X, :, ilist) * transpose(view(X, :, ilist))
-                decomp, history = partialschur(A; nev = d[k], which = :LR)
-                @debug "Cluster $k partialschur decomposition history:
-                matrix-vector products: $(history.mvproducts),
-                Number of eigenvalues: $(history.nev),
-                number of converged eigenvalues: $(history.nconverged),
-                converged? = $(history.converged)"
-                U[k] = decomp.Q
+                U[k] = kss_estimate_subspace(view(X, :, ilist), d[k])
             end
         end
 
         # Update clusters and calculate total cost
-        for i in 1:N
-            c[i] = argmax(norm(U[k]' * view(X, :, i)) for k in 1:K)
-        end
+        kss_assign_clusters!(c, U, X)
 
         # Break if clusters did not change, update otherwise
         if c == c_prev
@@ -128,4 +119,52 @@ function kss(
     end
 
     return KSSResult(U, c, iter, totalcost, counts, converged)
+end
+
+# Subroutines
+
+"""
+    kss_assign_clusters(U, X)
+
+Assign the `N` data points in `X` to the `K` subspaces in `U`
+and return a vector of the assignments.
+
+See also [`kss_assign_clusters!`](@ref), [`kss`](@ref).
+"""
+kss_assign_clusters(U, X) = kss_assign_clusters!(Vector{Int}(undef, size(X, 2)), U, X)
+
+"""
+    kss_assign_clusters!(c, U, X)
+
+Assign the `N` data points in `X` to the `K` subspaces in `U`,
+update the vector of assignments `c`,
+and return this vector of assignments.
+
+See also [`kss_assign_clusters`](@ref), [`kss`](@ref).
+"""
+function kss_assign_clusters!(c, U, X)
+    N = length(c)
+    K = length(U)
+    for i in 1:N
+        c[i] = argmax(norm(U[k]' * view(X, :, i)) for k in 1:K)
+    end
+    return c
+end
+
+"""
+    kss_estimate_subspace(Xk, dk)
+
+Return `dk`-dimensional subspace that best fits the data points in `Xk`.
+
+See also [`kss`](@ref).
+"""
+function kss_estimate_subspace(Xk, dk)
+    A = Xk * transpose(Xk)
+    decomp, history = partialschur(A; nev = dk, which = :LR)
+    @debug "Cluster partialschur decomposition history:
+    matrix-vector products: $(history.mvproducts),
+    Number of eigenvalues: $(history.nev),
+    number of converged eigenvalues: $(history.nconverged),
+    converged? = $(history.converged)"
+    return decomp.Q
 end
