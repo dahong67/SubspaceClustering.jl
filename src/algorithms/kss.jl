@@ -50,7 +50,7 @@ and metadata about the algorithm run.
 KSS seeks to cluster data points by their subspace
 by minimizing the following total cost
 ```math
-\\sum_{i=1}^N \\| X[:, i] - U[c[i]] * U[c[i]]' X[:, i] \\|_2^2
+\\sum_{i=1}^N \\| X[:, i] - U[c[i]] U[c[i]]' X[:, i] \\|_2^2
 ```
 with respect to the cluster assignments `c[1],...,c[N]`
 and subspace basis matrices `U[1],...,U[K]`.
