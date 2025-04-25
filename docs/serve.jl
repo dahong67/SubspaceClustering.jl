@@ -11,4 +11,5 @@ Pkg.instantiate()
 
 # Load packages and serve the docs
 using SubspaceClustering, LiveServer
+Base.exit_on_sigint(false)
 cd(servedocs, pkgdir(SubspaceClustering))
