@@ -3,9 +3,9 @@ module SubspaceClustering
 # Imports
 using ArnoldiMethod: partialschur
 using Compat
-using LinearAlgebra: mul!, norm, svd!, transpose
+using LinearAlgebra: mul!, norm, svd!
 using Logging: @info, @warn
-using ProgressLogging: @progress
+using ProgressLogging: @withprogress, @logprogress
 using Random: default_rng, randn!, AbstractRNG
 
 # Exports

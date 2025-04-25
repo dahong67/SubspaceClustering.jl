@@ -126,7 +126,7 @@ end
             rng = StableRNG(6)
             X = randn(rng, 5, 40)
             d = [2, 3]
-            @test_throws ArgumentError kss(X, d; niters = 0)
+            @test_throws ArgumentError kss(X, d; maxiters = -1)
         end
     end
 end

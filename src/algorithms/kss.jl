@@ -30,95 +30,122 @@ struct KSSResult{M<:AbstractMatrix{<:AbstractFloat},T<:Real}
 end
 
 # Main function
+
 """
-    kss(X, d; niters=100, rng::AbstractRNG = default_rng(), Uinit::AbstractVector{<:AbstractMatrix{<:Real}} = [randsubspace(rng, size(X, 1), d_i) for d_i in d])
+    kss(X::AbstractMatrix{<:Real}, d::AbstractVector{<:Integer};
+        maxiters = 100,
+        rng = default_rng(),
+        Uinit = [randsubspace(rng, size(X, 1), di) for di in d])
 
-Run K-subspaces on the data matrix `X` with subspace dimensions `d[1], ..., d[K]`.
+Cluster the `N` data points in the `D×N` data matrix `X`
+into `K` clusters via the **K**-**s**ub**s**paces (KSS) algorithm
+with corresponding subspace dimensions `d[1],...,d[K]`.
+Output is a [`KSSResult`](@ref) containing the resulting
+cluster assignments `c[1],...,c[N]`,
+subspace bases `U[1],...,U[K]`,
+and metadata about the algorithm run.
 
-# Arguments
-- `X::AbstractMatrix`: Data matrix of size `(D, N)`. Each column represents a data point.
-- `d::Vector{Int}`: A vector of length `K` containing the subspace dimensions for each of the 'K' subspaces.
+KSS seeks to cluster data points by their subspace
+by minimizing the following total cost
+```math
+\\sum_{i=1}^N \\| X[:, i] - U[c[i]] * U[c[i]]' X[:, i] \\|_2^2
+```
+with respect to the cluster assignments `c[1],...,c[N]`
+and subspace bases `U[1],...,U[K]`.
 
-# Keyword Arguments
-- `niters::Int=100`: Maximum number of iterations.
-- `rng::AbstractRNG=default_rng()`: Random Number generator with AbstractRNG type.
-- `Uinit::Vector{AbstractMatrix}`: A vector of length `K` containing initial subspace bases. If not provided, they are initialized randomly via `randsubspace`.
+# Keyword arguments
+- `maxiters::Integer = 100`: maximum number of iterations
+- `rng::AbstractRNG = default_rng()`: random number generator
+    (used when reinitializing the subspace for an empty cluster)
+- `Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}}
+    = [randsubspace(rng, size(X, 1), di) for di in d]`:
+    vector of `K` initial subspace bases to use (each `Uinit[k]` should be `D×d[k]`)
 
-# Returns
-A [`KSSResult`](@ref KSSResult) struct containing the clustering result including:
-    - The computed subspace bases `U`.
-    - The cluster assignments `c`.
-    - The number of iterations performed `iterations`.
-    - The total cost of the clustering `totalcost`.
-    - The number of data points in each cluster `counts`.
-    - The convergence status `converged`.
+See also [`KSSResult`](@ref).
 """
 function kss(
-    X::AbstractMatrix{T},                                                                             #in: data matrix with size (D, N)
-    d::Vector{<:Integer};                                                                                  #in: a vector of subspace dimensions of length K
-    niters::Integer = 100,                                                                   #in: maximum number of iterations
-    rng::AbstractRNG = default_rng(),                                                                    #in: a random number generator with AbstractRNG type
-    Uinit::Vector{M} = [randsubspace(rng, size(X, 1), d_i) for d_i in d],    #in: a vector of length K containing initial subspaces
-) where {T<:Real,M<:AbstractMatrix{T}}
-    U = deepcopy(Uinit)
+    X::AbstractMatrix{<:Real},
+    d::AbstractVector{<:Integer};
+    maxiters::Integer = 100,
+    rng::AbstractRNG = default_rng(),
+    Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}} = [
+        randsubspace(rng, size(X, 1), di) for di in d
+    ],
+)
+    # Require one-based indexing
+    Base.require_one_based_indexing(X, d, Uinit)
+    for Uk in Uinit
+        Base.require_one_based_indexing(Uk)
+    end
 
-    # Check arguments
-    D = size(X, 1) #Feature space dimension
-    niters > 0 ||
-        throw(ArgumentError("Number of iterations must be positive. Got: $niters"))
-    all(d_i -> d_i <= D, d) || throw(
-        DimensionMismatch("Subspace Dimensions are greater than Feature space Dimensions"),
+    # Extract sizes and check that they agree
+    K = (only ∘ unique)([length(d), length(Uinit)])
+    D = (only ∘ unique)([size(X, 1); size.(Uinit, 1)])
+    N = size(X, 2)
+
+    # Check subspace dimensions
+    for k in 1:K
+        d[k] == size(Uinit[k], 2) || throw(
+            ArgumentError(
+                "Basis matrix initialization `Uinit[$k]` must have `d[$k]=$(d[k])` columns.",
+            ),
+        )
+        0 <= d[k] <= D || throw(
+            DimensionMismatch(
+                "Subspace dimension `d[$k]=$(d[k])` must be between `0` and `D=$D`.",
+            ),
+        )
+    end
+
+    # Check maxiters
+    maxiters >= 0 || throw(
+        ArgumentError(
+            "Maximum number of iterations must be nonnegative. Got `maxiters=$maxiters`.",
+        ),
     )
-    all(d_i -> d_i >= 0, d) ||
-        throw(ArgumentError("All subspace dimensions must be positive. Got: $d"))
 
-    # Main calculation
-    K = length(d)
-    D, N = size(X)
-
+    # Initialize model parameters
+    U = deepcopy(Uinit)
     c = kss_assign_clusters(U, X)
-    c_prev = copy(c)
-    converged = false
-    iter = niters # default to maximum iterations if no early convergence
 
-    # Iterations
-    @progress for t in 1:niters
+    # Main loop
+    cprev = copy(c)
+    iterations, converged = 0, false
+    @withprogress while iterations < maxiters && !converged
+        iterations += 1
+
         # Update subspaces
         for k in 1:K
-            ilist = findall(==(k), c)
-            @debug "Cluster $k got assigned $(length(ilist)) data points"
-
-            if isempty(ilist)
-                @warn "Empty clusters detected at iteration $t - reinitializing the subspace. Consider reducing the number of clusters."
-                U[k] = randsubspace(rng, D, d[k])
+            inds = findall(==(k), c)
+            if !isempty(inds)
+                U[k] = kss_estimate_subspace(view(X, :, inds), d[k])
             else
-                U[k] = kss_estimate_subspace(view(X, :, ilist), d[k])
+                @warn "Empty cluster detected at iteration $iterations - reinitializing the subspace. Consider reducing the number of clusters."
+                U[k] = randsubspace(rng, D, d[k])
             end
         end
 
-        # Update clusters and calculate total cost
+        # Update cluster assignments
         kss_assign_clusters!(c, U, X)
 
-        # Break if clusters did not change, update otherwise
-        if c == c_prev
-            @info "Terminated early at iteration $t"
+        # Check for convergence
+        if cprev == c
+            @info "Converged after $iterations iteration."
             converged = true
-            iter = t
-            break
         end
-        c_prev .= c
+        copyto!(cprev, c)
+
+        # Log progress
+        if iterations % (maxiters ÷ 100) == 0
+            @logprogress iterations / maxiters
+        end
     end
 
-    #Count data points in each cluster
-    counts = [count(x -> x == k, c) for k in 1:K]
+    # Compute final counts and costs
+    counts = [count(==(k), c) for k in 1:K]
+    costs = [sum(abs2, xi) - sum(abs2, U[c[i]]' * xi) for (i, xi) in pairs(eachcol(X))]
 
-    # Calculate total cost
-    totalcost = 0
-    for i in 1:N
-        totalcost += norm(U[c[i]]' * view(X, :, i))
-    end
-
-    return KSSResult(U, c, iter, totalcost, counts, converged)
+    return KSSResult(U, c, iterations, sum(costs), counts, converged)
 end
 
 # Subroutines
@@ -144,7 +171,7 @@ See also [`kss_assign_clusters`](@ref), [`kss`](@ref).
 """
 function kss_assign_clusters!(c, U, X)
     for (i, xi) in pairs(eachcol(X))
-        c[i] = argmax(norm(U[k]' * xi) for k in eachindex(U))
+        c[i] = argmax(sum(abs2, U[k]' * xi) for k in eachindex(U))
     end
     return c
 end
