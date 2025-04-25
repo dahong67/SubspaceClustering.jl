@@ -1,32 +1,34 @@
 ## Algorithm: KSS
 
 # Result type
+
 """
-    KSSResult{M<:AbstractMatrix{<:AbstractFloat}, T<:Real}
+    KSSResult{
+        TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
+        Tc<:AbstractVector{<:Integer},
+        T<:Real}
 
-The output of K-subspaces clustering algorithm.
-
-#Type Parameters
-- `M<:AbstractMatrix{<:AbstractFloat}`: Type of the subspace basis matrices.
-- `T<:Real`: Type of the total cost of the clustering.
-
+The output of [`kss`](@ref).
 
 # Fields
-- `U::Vector{M}`: Subspace bases for each cluster.
-- `c::Vector{Int}`: Cluster assignments for each data point.
-- `iterations::Int`: Number of iterations performed.
-- `totalcost::T`: Total cost of the clustering.
-- `counts::Vector{Int}`: Number of data points in each cluster.
-- `converged::Bool`: Convergence status.
+- `U::TU`: vector of subspace basis matrices `U[1],...,U[K]`
+- `c::Tc`: vector of cluster assignments `c[1],...,c[N]`
+- `iterations::Int`: number of iterations performed
+- `totalcost::T`: final value of total cost function
+- `counts::Vector{Int}`: vector of cluster sizes `counts[1],...,counts[K]`
+- `converged::Bool`: final convergence status
 """
-
-struct KSSResult{M<:AbstractMatrix{<:AbstractFloat},T<:Real}
-    U::Vector{M} # Subspace bases for each cluster
-    c::Vector{Int} # Cluster assignments for each data point
-    iterations::Int # Number of iterations performed
-    totalcost::T # Total cost of the clustering
-    counts::Vector{Int} # Number of data points in each cluster
-    converged::Bool # Convergence status
+struct KSSResult{
+    TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
+    Tc<:AbstractVector{<:Integer},
+    T<:Real,
+}
+    U::TU
+    c::Tc
+    iterations::Int
+    totalcost::T
+    counts::Vector{Int}
+    converged::Bool
 end
 
 # Main function
