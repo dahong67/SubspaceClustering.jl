@@ -159,12 +159,8 @@ Return `dk`-dimensional subspace that best fits the data points in `Xk`.
 See also [`kss`](@ref).
 """
 function kss_estimate_subspace(Xk, dk)
-    A = Xk * transpose(Xk)
-    decomp, history = partialschur(A; nev = dk, which = :LR)
-    @debug "Cluster partialschur decomposition history:
-    matrix-vector products: $(history.mvproducts),
-    Number of eigenvalues: $(history.nev),
-    number of converged eigenvalues: $(history.nconverged),
-    converged? = $(history.converged)"
+    decomp, history = partialschur(Xk * Xk'; nev = dk, which = :LR)
+    history.converged ||
+        @warn "Iterative algorithm for subspace update did not converge - results may be inaccurate."
     return decomp.Q
 end
