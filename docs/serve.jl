@@ -1,15 +1,15 @@
 ## Serve a live version of the documentation
 
-# Activate and setup the `docs` package environment
+# Check that Julia version is at least v1.11
+# (needed for the `sources` field used in `docs/Project.toml`)
+VERSION >= v"1.11" || error("Julia version must be at least v1.11")
+
+# Activate and instantiate the `docs` environment
 using Pkg
 Pkg.activate(@__DIR__)
-Pkg.develop(PackageSpec(path=joinpath(@__DIR__, "..")))
 Pkg.instantiate()
 
 # Load packages and serve the docs
-using LiveServer, Revise
-using SubspaceClustering
+using SubspaceClustering, LiveServer
 Base.exit_on_sigint(false)
-cd(pkgdir(SubspaceClustering)) do
-    servedocs(; verbose=true, include_dirs=[joinpath(pkgdir(SubspaceClustering), "src")])
-end
+cd(servedocs, pkgdir(SubspaceClustering))
