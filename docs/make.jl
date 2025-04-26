@@ -1,3 +1,6 @@
+using Revise
+Revise.revise()
+
 using SubspaceClustering
 using Documenter
 
