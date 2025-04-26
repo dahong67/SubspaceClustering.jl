@@ -17,7 +17,7 @@ makedocs(;
         edit_link = "main",
         assets = String[],
     ),
-    pages = ["Home" => "index.md"],
+    pages = ["Home" => "index.md", "Developer Docs" => "devdocs.md"],
 )
 
 deploydocs(; repo = "github.com/dahong67/SubspaceClustering.jl", devbranch = "main")
