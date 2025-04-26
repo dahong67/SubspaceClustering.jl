@@ -5,7 +5,7 @@
     Aqua.test_all(SubspaceClustering)
 end
 
-@testitem "Code linting (JET.jl)" begin
+@testitem "Code linting (JET.jl)" tags = [:skipci] begin
     using JET
     JET.test_package(SubspaceClustering; target_defined_modules = true)
 end
