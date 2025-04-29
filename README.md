@@ -1,11 +1,12 @@
 # SubspaceClustering: Cluster data points by subspace
 
+[![version](https://juliahub.com/docs/General/SubspaceClustering/stable/version.svg)](https://juliahub.com/ui/Packages/General/SubspaceClustering)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://dahong67.github.io/SubspaceClustering.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://dahong67.github.io/SubspaceClustering.jl/dev/)
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![PkgEval](https://juliahub.com/docs/General/SubspaceClustering/stable/pkgeval.svg)](https://juliahub.com/ui/Packages/General/SubspaceClustering)
 [![Build Status](https://github.com/dahong67/SubspaceClustering.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/dahong67/SubspaceClustering.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/dahong67/SubspaceClustering.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/dahong67/SubspaceClustering.jl)
-[![PkgEval](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/S/SubspaceClustering.svg)](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/S/SubspaceClustering.html)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 > 👋 *This package provides research code and work is ongoing.
