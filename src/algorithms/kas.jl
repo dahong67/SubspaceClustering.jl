@@ -61,7 +61,7 @@ with respect to the cluster assignments `c[1],...,c[N]`, affine space basis matr
 # Keyword arguments
 - `maxiters::Integer = 100`: maximum number of iterations
 - `rng::AbstractRNG = default_rng()`: random number generator
-    (used when reinitializing the subspace for an empty cluster)
+    (used when reinitializing the affine space for an empty cluster)
 - `init::AbstractVector{<:Tuple{<:AbstractMatrix{<:AbstractFloat}, <:AbstractVector{<:AbstractFloat}}}
     = [randaffinespace(rng, size(X, 1), di) for di in d]`:
     vector of `K` initial pair of affine space basis matrices containing `U[1],...,U[K]`
@@ -80,7 +80,7 @@ function kas(
     ]
 )
 
-    # unpack the initial affine space basis matrices and bias vectors
+    # Unpack the initial affine space basis matrices and bias vectors
     Uinit = first.(init)
     binit = last.(init)
 
@@ -97,7 +97,7 @@ function kas(
 	K = (only ∘ unique)([length(d), length(binit)])
     D = (only ∘ unique)([size(X, 1); size.(Uinit, 1)])
 
-    # check affine space dimensions
+    # Check affine space dimensions
     for k in 1:K
         d[k] == size(Uinit[k], 2) || throw(
             ArgumentError(
@@ -162,7 +162,7 @@ function kas(
         end
 	end
 
-    #Compute final counts and costs
+    # Compute final counts and costs
     counts = [count(==(k), c) for k in 1:K]
     costs = [sum(abs2, (xi - b[c[i]])) - sum(abs2, U[c[i]]' * (xi - b[c[i]])) for (i, xi) in pairs(eachcol(X))]
 
