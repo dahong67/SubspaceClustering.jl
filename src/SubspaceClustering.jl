@@ -5,18 +5,20 @@ module SubspaceClustering
 
 # Imports
 using ArnoldiMethod: partialschur
+using Clustering: kmeans
 using Compat
-using LinearAlgebra: mul!, norm, svd!
+using LinearAlgebra: mul!, norm, svd!, Diagonal, Symmetric, I, normalize
 using Logging: @info, @warn
 using ProgressLogging: @withprogress, @logprogress
 using Random: AbstractRNG, default_rng, randn!
 
 # Exports
-export KSSResult, kss
+export KSSResult, kss, TSCResult, tsc
 @compat public randsubspace
 
 # Algorithms
 include("algorithms/kss.jl")
+include("algorithms/tsc.jl")
 
 # Utility functions
 """
