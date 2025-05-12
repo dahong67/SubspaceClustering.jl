@@ -90,12 +90,7 @@ function tsc(
     )
 
     # Affinity matrix
-    col_norms = [norm(xi) for xi in eachcol(X)]
-    Norm_vec = [xi ./ col_norms[i] for (i, xi) in pairs(eachcol(X))]
-    Norm_mat = hcat(Norm_vec...)
-    A = transpose(Norm_mat) * Norm_mat
-
-    S = exp.((-2 .* acos.(clamp.(A, -1, 1))))
+    S = affinity(X; chunksize=1000)
 
     # Compute node degrees and form Laplacian matrix
     D = Diagonal(vec(sum(S, dims=2)))
@@ -120,3 +115,51 @@ function tsc(
 
 end
 
+"""
+    affinity(X::AbstractMatrix; max_nz::Integer=30, chunksize::Integer=isqrt(size(X,2)))
+
+Compute a **sparse**, **symmetric** cosine-angle affinity matrix for the data points in `D×N` data matrix `X`
+and return a `N×N` size sparsematrix of type `SparseMatrixCSC{Float64, Int64}`  with `max_nz` values per row/column .
+
+# Keyword arguments
+- `max_nz::Integer = 30`: maximum number of nonzero values per row/column
+- `chunksize::Integer = isqrt(size(X,2))`: Number of columnns to process at a time when computing pairwise cosine. 
+"""
+function affinity(
+    X::AbstractMatrix{<:Real}; 
+    max_nz::Integer = 30, 
+    chunksize::Integer = isqrt(size(X,2)),
+)
+    
+    func = c -> exp(-2*acos(clamp(c,-1,1)))
+
+    # Compute normalized spectra (so that inner product = cosine of angle)
+    X = mapslices(normalize, X; dims=1)
+
+    # Find nonzero values (in chunks)
+	C_buf = similar(X, size(X,2), chunksize)    # pairwise cosine buffer
+	s_buf = Vector{Int}(undef, size(X,2))       # sorting buffer
+	nz_list = @withprogress mapreduce(vcat, enumerate(Iterators.partition(1:size(X,2), chunksize))) do (chunk_idx, chunk)
+        
+        # Compute cosine angles (for chunk) and store in appropriate buffer
+		C_chunk = length(chunk) == chunksize ? C_buf : similar(X, size(X,2), length(chunk))
+		mul!(C_chunk, X', view(X, :, chunk))
+
+        # Zero out all but `max_nz` largest values
+		nzs = map(chunk, eachcol(C_chunk)) do col, c
+			idx = partialsortperm!(s_buf, c, 1:max_nz; rev=true)
+			collect(idx), fill(col, max_nz), func.(view(c,idx))
+		end
+
+        # Log progress and return
+		@logprogress chunk_idx/cld(size(X,2),chunksize)
+		return nzs
+    end
+
+    # Form and return sparse array
+	rows = reduce(vcat, getindex.(nz_list, 1))
+	cols = reduce(vcat, getindex.(nz_list, 2))
+	vals = reduce(vcat, getindex.(nz_list, 3))
+	return sparse([rows; cols],[cols; rows],[vals; vals])
+
+end

@@ -11,6 +11,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 ArnoldiMethod = "0.4.0"
@@ -20,4 +21,5 @@ LinearAlgebra = "1.10"
 Logging = "1.10"
 ProgressLogging = "0.1.4"
 Random = "1.10"
+SparseArrays = "1.11.0"
 julia = "1.10"

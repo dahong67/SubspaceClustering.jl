@@ -7,6 +7,7 @@ module SubspaceClustering
 using ArnoldiMethod: partialschur
 using Clustering: kmeans
 using Compat
+using SparseArrays: sparse
 using LinearAlgebra: mul!, norm, svd!, Diagonal, Symmetric, I, normalize
 using Logging: @info, @warn
 using ProgressLogging: @withprogress, @logprogress
@@ -60,5 +61,7 @@ function randsubspace!(rng::AbstractRNG, U::AbstractMatrix)
     return mul!(U, P, Q')
 end
 randsubspace!(U::AbstractMatrix) = randsubspace!(default_rng(), U)
+
+
 
 end
