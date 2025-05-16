@@ -95,8 +95,8 @@ function randaffinespace!(rng::AbstractRNG, U::AbstractMatrix, b::AbstractVector
     P, _, Q = svd!(U)
     mul!(U, P, Q')
 
-    # Generate random bias vector
-    randn!(rng, b)
+    # Generate initial zero bias vector
+    fill!(b, zero(eltype(b)))
 
     return U, b
 end
