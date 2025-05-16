@@ -19,7 +19,7 @@ The output of [`kss`](@ref).
 - `converged::Bool`: final convergence status
 """
 struct KSSResult{
-    TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
+    TU<:AbstractVector{<:AbstractMatrix{<:Number}},
     Tc<:AbstractVector{<:Integer},
     T<:Real,
 }
@@ -34,7 +34,7 @@ end
 # Main function
 
 """
-    kss(X::AbstractMatrix{<:Real}, d::AbstractVector{<:Integer};
+    kss(X::AbstractMatrix{T} where T<:Number, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
         Uinit = [randsubspace(rng, size(X, 1), di) for di in d])
@@ -59,7 +59,7 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `maxiters::Integer = 100`: maximum number of iterations
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the subspace for an empty cluster)
-- `Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}}
+- `Uinit::AbstractVector{<:AbstractMatrix{T}}
     = [randsubspace(rng, size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
     (each `Uinit[k]` should be `D×d[k]`)
@@ -67,12 +67,12 @@ and subspace basis matrices `U[1],...,U[K]`.
 See also [`KSSResult`](@ref).
 """
 function kss(
-    X::AbstractMatrix{<:Real},
+    X::AbstractMatrix{T} where T<:Number,
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}} = [
-        randsubspace(rng, size(X, 1), di) for di in d
+    Uinit::AbstractVector{<:AbstractMatrix{<:Number}} = [
+        randsubspace(rng, eltype(X), size(X, 1), di) for di in d
     ],
 )
     # Require one-based indexing
@@ -123,7 +123,7 @@ function kss(
                 U[k] = kss_estimate_subspace(view(X, :, inds), d[k])
             else
                 @warn "Empty cluster detected at iteration $iterations - reinitializing the subspace. Consider reducing the number of clusters."
-                U[k] = randsubspace(rng, D, d[k])
+                U[k] = randsubspace(rng, eltype(X), D, d[k])
             end
         end
 
