@@ -185,9 +185,14 @@ Return `dk`-dimensional subspace that best fits the data points in `Xk`.
 
 See also [`kss`](@ref).
 """
-function kss_estimate_subspace(Xk, dk)
-    decomp, history = partialschur(Xk * Xk'; nev = dk, which = :LR)
-    history.converged ||
-        @warn "Iterative algorithm for subspace update did not converge - results may be inaccurate."
-    return decomp.Q
+function kss_estimate_subspace(Xk, dk; method::Symbol = :svd)
+    if method == :svd
+        U, _, _ = svd(Xk)
+        return U[:, 1:dk]
+    
+    elseif method == :tsvd
+        throw(ArgumentError(
+            "TSVD solver not available: install the corresponding package.",
+        ))
+    end
 end
