@@ -19,11 +19,7 @@ The output of [`tsc`](@ref).
 - `converged::Bool`: final convergence status
 """
 
-struct TSCResult{
-    TU<:AbstractMatrix{<:AbstractFloat},
-    Tc<:AbstractVector{<:Integer},
-    T<:Real,
-}
+struct TSCResult{TU<:AbstractMatrix{<:AbstractFloat},Tc<:AbstractVector{<:Integer},T<:Real}
     U::TU
     c::Tc
     iterations::Int
@@ -71,15 +67,12 @@ normalized versions of the `k` smallest eigenvectors of the Laplacian matrix `L_
 See also [`TSCResult`](@ref).
 """
 
-
-function tsc(
-    X::AbstractMatrix{<:Real}, 
-    k::Integer;
-    maxiters::Integer = 100,
-)
+function tsc(X::AbstractMatrix{<:Real}, k::Integer; maxiters::Integer = 100)
     #  Check clusters are more than 1 and not greater than the number of data points
     2 <= k <= size(X, 2) || throw(
-        ArgumentError("Number of clusters `k` must be between 2 and the number of columns in `X`, got k = $k."),
+        ArgumentError(
+            "Number of clusters `k` must be between 2 and the number of columns in `X`, got k = $k.",
+        ),
     )
 
     # Check maxiters
@@ -90,20 +83,21 @@ function tsc(
     )
 
     # Affinity matrix
-    S = affinity(X; chunksize=1000)
+    S = affinity(X; chunksize = 1000)
 
     # Compute node degrees and form Laplacian matrix
-    D = Diagonal(vec(sum(S, dims=2)))
+    D = Diagonal(vec(sum(S; dims = 2)))
     D_sqrinv = sqrt(inv(D))
     L_sym = Symmetric(I - (D_sqrinv * S * D_sqrinv))
 
     # Compute eigenvectors
-    decomp, history = partialschur(L_sym; nev=k, which=:SR)
-    history.converged || @warn "Iterative algorithm for threshold subspace did not converge - results may be inaccurate."
-    V = mapslices(normalize, decomp.Q; dims=2)
+    decomp, history = partialschur(L_sym; nev = k, which = :SR)
+    history.converged ||
+        @warn "Iterative algorithm for threshold subspace did not converge - results may be inaccurate."
+    V = mapslices(normalize, decomp.Q; dims = 2)
 
     # Compute cluster assignments via k-means
-    result = kmeans(permutedims(V), k; maxiter=maxiters)
+    result = kmeans(permutedims(V), k; maxiter = maxiters)
     U = result.centers
     c = result.assignments
     iterations = result.iterations
@@ -112,7 +106,6 @@ function tsc(
     converged = result.converged
 
     return TSCResult(U, c, iterations, totalcost, counts, converged)
-
 end
 
 """
@@ -126,40 +119,41 @@ and return a `N×N` size sparsematrix of type `SparseMatrixCSC{Float64, Int64}` 
 - `chunksize::Integer = isqrt(size(X,2))`: Number of columnns to process at a time when computing pairwise cosine. 
 """
 function affinity(
-    X::AbstractMatrix{<:Real}; 
-    max_nz::Integer = 30, 
-    chunksize::Integer = isqrt(size(X,2)),
+    X::AbstractMatrix{<:Real};
+    max_nz::Integer = 30,
+    chunksize::Integer = isqrt(size(X, 2)),
 )
-    
-    func = c -> exp(-2*acos(clamp(c,-1,1)))
+    func = c -> exp(-2 * acos(clamp(c, -1, 1)))
 
     # Compute normalized spectra (so that inner product = cosine of angle)
-    X = mapslices(normalize, X; dims=1)
+    X = mapslices(normalize, X; dims = 1)
 
     # Find nonzero values (in chunks)
-	C_buf = similar(X, size(X,2), chunksize)    # pairwise cosine buffer
-	s_buf = Vector{Int}(undef, size(X,2))       # sorting buffer
-	nz_list = @withprogress mapreduce(vcat, enumerate(Iterators.partition(1:size(X,2), chunksize))) do (chunk_idx, chunk)
-        
+    C_buf = similar(X, size(X, 2), chunksize)    # pairwise cosine buffer
+    s_buf = Vector{Int}(undef, size(X, 2))       # sorting buffer
+    nz_list = @withprogress mapreduce(
+        vcat,
+        enumerate(Iterators.partition(1:size(X, 2), chunksize)),
+    ) do (chunk_idx, chunk)
+
         # Compute cosine angles (for chunk) and store in appropriate buffer
-		C_chunk = length(chunk) == chunksize ? C_buf : similar(X, size(X,2), length(chunk))
-		mul!(C_chunk, X', view(X, :, chunk))
+        C_chunk = length(chunk) == chunksize ? C_buf : similar(X, size(X, 2), length(chunk))
+        mul!(C_chunk, X', view(X, :, chunk))
 
         # Zero out all but `max_nz` largest values
-		nzs = map(chunk, eachcol(C_chunk)) do col, c
-			idx = partialsortperm!(s_buf, c, 1:max_nz; rev=true)
-			collect(idx), fill(col, max_nz), func.(view(c,idx))
-		end
+        nzs = map(chunk, eachcol(C_chunk)) do col, c
+            idx = partialsortperm!(s_buf, c, 1:max_nz; rev = true)
+            return collect(idx), fill(col, max_nz), func.(view(c, idx))
+        end
 
         # Log progress and return
-		@logprogress chunk_idx/cld(size(X,2),chunksize)
-		return nzs
+        @logprogress chunk_idx / cld(size(X, 2), chunksize)
+        return nzs
     end
 
     # Form and return sparse array
-	rows = reduce(vcat, getindex.(nz_list, 1))
-	cols = reduce(vcat, getindex.(nz_list, 2))
-	vals = reduce(vcat, getindex.(nz_list, 3))
-	return sparse([rows; cols],[cols; rows],[vals; vals])
-
+    rows = reduce(vcat, getindex.(nz_list, 1))
+    cols = reduce(vcat, getindex.(nz_list, 2))
+    vals = reduce(vcat, getindex.(nz_list, 3))
+    return sparse([rows; cols], [cols; rows], [vals; vals])
 end
