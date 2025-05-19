@@ -71,6 +71,7 @@ function kss(
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
+    method::Symbol = :svd,
     Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}} = [
         randsubspace(rng, size(X, 1), di) for di in d
     ],
@@ -120,7 +121,7 @@ function kss(
         for k in 1:K
             inds = findall(==(k), c)
             if !isempty(inds)
-                U[k] = kss_estimate_subspace(view(X, :, inds), d[k])
+                U[k] = kss_estimate_subspace(view(X, :, inds), d[k]; method=method)
             else
                 @warn "Empty cluster detected at iteration $iterations - reinitializing the subspace. Consider reducing the number of clusters."
                 U[k] = randsubspace(rng, D, d[k])
@@ -185,14 +186,11 @@ Return `dk`-dimensional subspace that best fits the data points in `Xk`.
 
 See also [`kss`](@ref).
 """
-function kss_estimate_subspace(Xk, dk; method::Symbol = :svd)
-    if method == :svd
+function kss_estimate_subspace(Xk, dk; method=method)
+    if method === :svd
         U, _, _ = svd(Xk)
         return U[:, 1:dk]
-    
-    elseif method == :tsvd
-        throw(ArgumentError(
-            "TSVD solver not available: install the corresponding package.",
-        ))
+    else 
+        throw(ArgumentError("Unknown method: $method"))
     end
 end
