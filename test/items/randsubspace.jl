@@ -33,3 +33,16 @@ end
     @test isapprox(Q' * Q, I, atol = 1e-10)
 
 end
+
+@testset "randsubspace fallbacks" begin
+    using LinearAlgebra, StableRNGs
+
+    rng = StableRNG(5)
+    Q1 = SubspaceClustering.randsubspace(Float32, 4, 2)
+    @test eltype(Q3) == Float32
+    @test isapprox(Q1' * Q1, I, atol = 1e-10)
+
+    Q2 = SubspaceClustering.randsubspace(ComplexF32, 4, 2)
+    @test eltype(Q2) == ComplexF32
+    @test isapprox(Q2' * Q2, I, atol = 1e-10)
+end

@@ -1,11 +1,12 @@
 # kss function
+for T in (Float64, ComplexF64)
 
-@testitem "Random data with 2 clusters with same subspace dimensions" begin
+    @testset "Random data with 2 clusters with same subspace dimensions with eltype=$T" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(0)
     D, N = 5, 20
-    X = randn(rng, D, N)
+    X = randn(rng, T, D, N)
     d = [2, 2]
     result = kss(X, d)
     U, c = result.U, result.c
@@ -18,14 +19,14 @@
     for subspace in U
         @test isapprox(subspace' * subspace, I, atol = 1e-10)
     end
-end
+    end
 
-@testitem "Random data with 3 clusters with different subspace dimensions" begin
+    @testset "Random data with 3 clusters with different subspace dimensions" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(1)
     D, N = 5, 20
-    X = randn(rng, D, N)
+    X = randn(rng, T, D, N)
     d = [2, 3, 4]
     result = kss(X, d)
     U, c = result.U, result.c
@@ -39,32 +40,32 @@ end
     for subspace in U
         @test isapprox(subspace' * subspace, I, atol = 1e-10)
     end
-end
+    end
 
-@testitem "Empty cluster case" begin
+    @testset "Empty cluster case" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(2)
     D, N = 5, 20
     d = [2, 3]
-    U1 = SubspaceClustering.randsubspace(rng, Float64, D, d[1])
+    U1 = SubspaceClustering.randsubspace(rng, T, D, d[1])
     X = U1 * randn(rng, d[1], N)
-    U2 = SubspaceClustering.randsubspace(rng, Float64, D, d[2])
+    U2 = SubspaceClustering.randsubspace(rng, T, D, d[2])
     result = kss(X, d; Uinit = [U1, U2])
     U, c = result.U, result.c
 
     @test isempty(findall(==(2), c))
-end
+    end
 
-@testitem "Nontrivial cluster case with noise" begin
+    @testset "Nontrivial cluster case with noise" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(3)
     D, N = 7, 20
     d = [2, 3]
 
-    U1 = SubspaceClustering.randsubspace(rng, Float64, D, d[1])
-    U2 = SubspaceClustering.randsubspace(rng, Float64, D, d[2])
+    U1 = SubspaceClustering.randsubspace(rng, T, D, d[1])
+    U2 = SubspaceClustering.randsubspace(rng, T, D, d[2])
     X = hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) + 0.01 * randn(rng, D, 2N)
     result = kss(X, d; Uinit = [U1, U2])
     U, c = result.U, result.c
@@ -77,6 +78,8 @@ end
     for k in 1:length(d)
         @test !isempty(findall(==(k), c))
     end
+    end
+    
 end
 
 @testitem "Argument validation" begin
