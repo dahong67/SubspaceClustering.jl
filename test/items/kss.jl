@@ -47,9 +47,9 @@ end
     rng = StableRNG(2)
     D, N = 5, 20
     d = [2, 3]
-    U1 = SubspaceClustering.randsubspace(rng, D, d[1])
+    U1 = SubspaceClustering.randsubspace(rng, Float64, D, d[1])
     X = U1 * randn(rng, d[1], N)
-    U2 = SubspaceClustering.randsubspace(rng, D, d[2])
+    U2 = SubspaceClustering.randsubspace(rng, Float64, D, d[2])
     result = kss(X, d; Uinit = [U1, U2])
     U, c = result.U, result.c
 
@@ -63,8 +63,8 @@ end
     D, N = 7, 20
     d = [2, 3]
 
-    U1 = SubspaceClustering.randsubspace(rng, D, d[1])
-    U2 = SubspaceClustering.randsubspace(rng, D, d[2])
+    U1 = SubspaceClustering.randsubspace(rng, Float64, D, d[1])
+    U2 = SubspaceClustering.randsubspace(rng, Float64, D, d[2])
     X = hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) + 0.01 * randn(rng, D, 2N)
     result = kss(X, d; Uinit = [U1, U2])
     U, c = result.U, result.c
