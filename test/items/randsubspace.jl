@@ -34,7 +34,7 @@ end
 
 end
 
-@testset "randsubspace fallbacks" begin
+@testitem "randsubspace fallbacks" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(5)
