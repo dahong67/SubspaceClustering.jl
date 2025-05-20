@@ -39,10 +39,16 @@ end
 
     rng = StableRNG(5)
     Q1 = SubspaceClustering.randsubspace(Float32, 4, 2)
-    @test eltype(Q3) == Float32
+    @test eltype(Q1) == Float32
     @test isapprox(Q1' * Q1, I, atol = 1e-10)
 
     Q2 = SubspaceClustering.randsubspace(ComplexF32, 4, 2)
     @test eltype(Q2) == ComplexF32
     @test isapprox(Q2' * Q2, I, atol = 1e-10)
+
+    U = randn(rng, Float64, 4, 2)
+    Q3 = SubspaceClustering.randsubspace!(U)
+    @test eltype(Q3) == Float64
+    @test size(Q3) == (4, 2)
+    @test isapprox(Q3' * Q3, I, atol = 1e-10)
 end
