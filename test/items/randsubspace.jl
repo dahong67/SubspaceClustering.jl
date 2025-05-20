@@ -38,12 +38,12 @@ end
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(5)
-    Q1 = SubspaceClustering.randsubspace(Float32, 4, 2)
-    @test eltype(Q1) == Float32
+    Q1 = SubspaceClustering.randsubspace(Float64, 4, 2)
+    @test eltype(Q1) == Float64
     @test isapprox(Q1' * Q1, I, atol = 1e-10)
 
-    Q2 = SubspaceClustering.randsubspace(ComplexF32, 4, 2)
-    @test eltype(Q2) == ComplexF32
+    Q2 = SubspaceClustering.randsubspace(ComplexF64, 4, 2)
+    @test eltype(Q2) == ComplexF64
     @test isapprox(Q2' * Q2, I, atol = 1e-10)
 
     U = randn(rng, Float64, 4, 2)
