@@ -123,7 +123,7 @@ function affinity(
     max_nz::Integer = 30,
     chunksize::Integer = isqrt(size(X, 2)),
 )
-    func = c -> exp(-2 * acos(clamp(c, -1, 1)))
+    func = c -> exp(-2 * acos(clamp(abs(c), -1, 1)))
 
     # Compute normalized spectra (so that inner product = cosine of angle)
     X = mapslices(normalize, X; dims = 1)
