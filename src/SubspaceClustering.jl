@@ -20,32 +20,30 @@ include("algorithms/kss.jl")
 
 # Utility functions
 """
-    randsubspace([rng=default_rng()], [T=Float64], D, d)
+    randsubspace([rng=default_rng()], [T=Float64], D, d) where T<:Number
 
-Generate a random `d`-dimensional subspace of `ℝᴰ`
-and return a basis matrix with element type `T<:AbstractFloat`.
+Generate a random `d`-dimensional subspace of `ℝᴰ` (if T<:AbstractFloat) or `ℂᴰ`
+(if T<:Complex{<:AbstractFloat}) and return a `D×d` orthonormal basis matrix with element type `T`.
 
 See also [`randsubspace!`](@ref)
 """
 randsubspace(rng::AbstractRNG, ::Type{T}, D::Integer, d::Integer) where {T<:AbstractFloat} =
     randsubspace!(rng, Array{T}(undef, D, d))
-randsubspace(::Type{T}, D::Integer, d::Integer) where {T<:AbstractFloat} =
+randsubspace(rng::AbstractRNG, ::Type{T}, D::Integer, d::Integer) where {T<:Complex{<:AbstractFloat}} =
+    randsubspace!(rng, Array{T}(undef, D, d))
+randsubspace(::Type{T}, D::Integer, d::Integer) where {T<:Number} =
     randsubspace(default_rng(), T, D, d)
-randsubspace(rng::AbstractRNG, D::Integer, d::Integer) = randsubspace(rng, Float64, D, d)
-randsubspace(D::Integer, d::Integer) = randsubspace(default_rng(), Float64, D, d)
 
 """
-    randsubspace!([rng=default_rng()], U::AbstractMatrix)
+    randsubspace!([rng=default_rng()], U::AbstractMatrix{T}) where T<:Number
 
 Set the `D×d` matrix `U` to be the basis matrix of
-a randomly generated `d`-dimensional subspace of `ℝᴰ`.
+a randomly generated `d`-dimensional subspace of `ℝᴰ` or `ℂᴰ`.
 
 See also [`randsubspace`](@ref)
 """
-function randsubspace!(rng::AbstractRNG, U::AbstractMatrix)
+function randsubspace!(rng::AbstractRNG, U::AbstractMatrix{T}) where T<:Number
     # Check arguments
-    eltype(U) <: AbstractFloat ||
-        throw(ArgumentError("Basis matrix `U` must have real (floating point) elements."))
     size(U, 2) <= size(U, 1) || throw(
         ArgumentError(
             "Subspace dimension `d` cannot be greater than the ambient dimension `D`.",
