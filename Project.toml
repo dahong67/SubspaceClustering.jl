@@ -6,21 +6,12 @@ version = "0.1.0"
 [deps]
 ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+IncrementalSVD = "de227602-7e15-40a7-b166-bbaff82a52b8"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-
-[weakdeps]
-IncrementalSVD = "de227602-7e15-40a7-b166-bbaff82a52b8"
-LowRankApprox = "898213cb-b102-5a47-900c-97e73b919f73"
 TSVD = "9449cd9e-2762-5aa3-a617-5413e99d722e"
-
-
-[extensions]
-IncSVDExt = "IncrementalSVD"
-LRAExt = "LowRankApprox"
-TSVDExt = "TSVD"
 
 [compat]
 ArnoldiMethod = "0.4.0"
@@ -28,7 +19,6 @@ Compat = "3.47.0, 4.10.0"
 IncrementalSVD = "1.0.0"
 LinearAlgebra = "1.10"
 Logging = "1.10"
-LowRankApprox = "0.5.5"
 ProgressLogging = "0.1.4"
 Random = "1.10"
 TSVD = "0.4.4"
