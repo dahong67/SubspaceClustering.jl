@@ -4,10 +4,10 @@
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(0)
-    D, N = 5, 20
+    D, N = 5, 80
     X = randn(rng, D, N)
     d = [2, 2]
-    result = kss(X, d)
+    result = kss(X, d; method=SubspaceEstimation.SVD())
     U, c = result.U, result.c
 
     @test length(U) == length(d)
@@ -24,10 +24,10 @@ end
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(1)
-    D, N = 5, 20
+    D, N = 10, 100
     X = randn(rng, D, N)
     d = [2, 3, 4]
-    result = kss(X, d)
+    result = kss(X, d; method = SubspaceEstimation.TrunSVD())
     U, c = result.U, result.c
 
     @test length(U) == length(d)
@@ -45,12 +45,12 @@ end
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(2)
-    D, N = 5, 20
+    D, N = 10, 100
     d = [2, 3]
     U1 = SubspaceClustering.randsubspace(rng, D, d[1])
     X = U1 * randn(rng, d[1], N)
     U2 = SubspaceClustering.randsubspace(rng, D, d[2])
-    result = kss(X, d; Uinit = [U1, U2])
+    result = kss(X, d; method=SubspaceEstimation.ISVD(), Uinit = [U1, U2])
     U, c = result.U, result.c
 
     @test isempty(findall(==(2), c))
@@ -60,7 +60,7 @@ end
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(3)
-    D, N = 7, 20
+    D, N = 7, 40
     d = [2, 3]
 
     U1 = SubspaceClustering.randsubspace(rng, D, d[1])
@@ -70,8 +70,9 @@ end
     U, c = result.U, result.c
 
     # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
-    @test all(c[1:N] .== 1)
-    @test all(c[(N+1):end] .== 2)
+    @test length(unique(c[1:N])) == 1
+    @test length(unique(c[(N+1):end])) == 1
+    @test unique(c[1:N])[1] != unique(c[(N+1):end])[1]
 
     # Confirming clusters aren't empty
     for k in 1:length(d)
