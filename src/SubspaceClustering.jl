@@ -6,16 +6,17 @@ module SubspaceClustering
 # Imports
 using ArnoldiMethod: partialschur
 using Compat
-using LinearAlgebra: mul!, norm, svd!, svd
+using LinearAlgebra: mul!, norm, svd!
 using Logging: @info, @warn
 using ProgressLogging: @withprogress, @logprogress
 using Random: AbstractRNG, default_rng, randn!
 
 # Exports
-export KSSResult, kss
+export KSSResult, kss, SubspaceEstimation
 @compat public randsubspace
 
 # Algorithms
+include("methods.jl")
 include("algorithms/kss.jl")
 
 # Utility functions

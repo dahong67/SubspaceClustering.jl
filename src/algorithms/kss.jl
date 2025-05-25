@@ -37,6 +37,7 @@ end
     kss(X::AbstractMatrix{<:Real}, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
+        method = SubspaceEstimation.DEFAULT_ALGORITHM,
         Uinit = [randsubspace(rng, size(X, 1), di) for di in d])
 
 Cluster the `N` data points in the `D×N` data matrix `X`
@@ -59,6 +60,8 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `maxiters::Integer = 100`: maximum number of iterations
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the subspace for an empty cluster)
+- `method::SubspaceEstimation.AbstractAlgorithm`: subspace estimation 
+    algorithm (default is [`DEFAULT_ALGORITHM`](@ref))
 - `Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}}
     = [randsubspace(rng, size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
@@ -71,7 +74,7 @@ function kss(
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    method::Symbol = :svd,
+    method::SubspaceEstimation.AbstractAlgorithm = SubspaceEstimation.DEFAULT_ALGORITHM,
     Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}} = [
         randsubspace(rng, size(X, 1), di) for di in d
     ],
@@ -87,7 +90,7 @@ function kss(
     D = (only ∘ unique)([size(X, 1); size.(Uinit, 1)])
 
     # Check subspace dimensions
-    for k in 1:K
+    for k in Base.OneTo(K)
         d[k] == size(Uinit[k], 2) || throw(
             ArgumentError(
                 "Basis matrix initialization `Uinit[$k]` must have `d[$k]=$(d[k])` columns.",
@@ -118,10 +121,10 @@ function kss(
         iterations += 1
 
         # Update subspaces
-        for k in 1:K
+        for k in Base.OneTo(K)
             inds = findall(==(k), c)
             if !isempty(inds)
-                U[k] = kss_estimate_subspace(view(X, :, inds), d[k]; method=method)
+                U[k] = kss_estimate_subspace(view(X, :, inds), d[k], method)
             else
                 @warn "Empty cluster detected at iteration $iterations - reinitializing the subspace. Consider reducing the number of clusters."
                 U[k] = randsubspace(rng, D, d[k])
@@ -145,7 +148,7 @@ function kss(
     end
 
     # Compute final counts and costs
-    counts = [count(==(k), c) for k in 1:K]
+    counts = [count(==(k), c) for k in Base.OneTo(K)]
     costs = [sum(abs2, xi) - sum(abs2, U[c[i]]' * xi) for (i, xi) in pairs(eachcol(X))]
 
     return KSSResult(U, c, iterations, sum(costs), counts, converged)
@@ -180,17 +183,12 @@ function kss_assign_clusters!(c, U, X)
 end
 
 """
-    kss_estimate_subspace(Xk, dk)
+    kss_estimate_subspace(Xk, dk, method)
 
 Return `dk`-dimensional subspace that best fits the data points in `Xk`.
 
 See also [`kss`](@ref).
 """
-function kss_estimate_subspace(Xk, dk; method=method)
-    if method === :svd
-        U, _, _ = svd(Xk)
-        return U[:, 1:dk]
-    else 
-        throw(ArgumentError("Unknown method: $method"))
-    end
+function kss_estimate_subspace(Xk, dk, method)
+    return SubspaceEstimation.estimate_subspace(Xk, dk, method)
 end
