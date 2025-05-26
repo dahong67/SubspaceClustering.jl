@@ -22,8 +22,9 @@ include("algorithms/kss.jl")
 """
     randsubspace([rng=default_rng()], [T=Float64], D, d) where T<:Number
 
-Generate a random `d`-dimensional subspace of `ℝᴰ` (if T<:AbstractFloat) or `ℂᴰ`
-(if T<:Complex{<:AbstractFloat}) and return a `D×d` orthonormal basis matrix with element type `T`.
+Generate a random `d`-dimensional subspace of `ℝᴰ` (if `T<:Real`) or of `ℂᴰ` (if `T<:Complex`)
+and return a `D×d` orthonormal basis matrix with elements of type `T`
+(`T` must be a floating point type).
 
 See also [`randsubspace!`](@ref)
 """
