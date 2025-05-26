@@ -86,7 +86,7 @@ function kss(
     D = (only ∘ unique)([size(X, 1); size.(Uinit, 1)])
 
     # Check subspace dimensions
-    for k in 1:K
+    for k in 1:K 
         d[k] == size(Uinit[k], 2) || throw(
             ArgumentError(
                 "Basis matrix initialization `Uinit[$k]` must have `d[$k]=$(d[k])` columns.",
