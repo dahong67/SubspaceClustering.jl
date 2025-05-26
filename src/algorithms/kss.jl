@@ -34,7 +34,7 @@ end
 # Main function
 
 """
-    kss(X::AbstractMatrix{T} where T<:Number, d::AbstractVector{<:Integer};
+    kss(X::AbstractMatrix{<:Number}, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
         Uinit = [randsubspace(rng, size(X, 1), di) for di in d])
