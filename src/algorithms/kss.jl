@@ -67,7 +67,7 @@ and subspace basis matrices `U[1],...,U[K]`.
 See also [`KSSResult`](@ref).
 """
 function kss(
-    X::AbstractMatrix{T} where T<:Number,
+    X::AbstractMatrix{<:Number},
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
