@@ -72,7 +72,7 @@ function kss(
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
     Uinit::AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}} = [
-        randsubspace(rng, eltype(X), size(X, 1), di) for di in d
+        randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d
     ],
 )
     # Require one-based indexing
