@@ -1,6 +1,6 @@
 # kss function
 
-@testitem "Random data with 2 clusters with same subspace dimensions with eltype=$T" begin
+@testitem "Random data with 2 clusters with same subspace dimensions" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(0)
@@ -22,7 +22,7 @@
     end
 end
 
-@testitem "Random data with 2 clusters with same subspace dimensions with eltype=$T" begin
+@testitem "Random data with 2 clusters with same subspace dimensions" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(0)

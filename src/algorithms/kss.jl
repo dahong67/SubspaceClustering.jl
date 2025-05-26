@@ -4,7 +4,7 @@
 
 """
     KSSResult{
-        TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
+        TU<:AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}},
         Tc<:AbstractVector{<:Integer},
         T<:Real}
 
@@ -19,7 +19,7 @@ The output of [`kss`](@ref).
 - `converged::Bool`: final convergence status
 """
 struct KSSResult{
-    TU<:AbstractVector{<:AbstractMatrix{<:Number}},
+    TU<:AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}},
     Tc<:AbstractVector{<:Integer},
     T<:Real,
 }
@@ -71,7 +71,7 @@ function kss(
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    Uinit::AbstractVector{<:AbstractMatrix{<:Number}} = [
+    Uinit::AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}} = [
         randsubspace(rng, eltype(X), size(X, 1), di) for di in d
     ],
 )
