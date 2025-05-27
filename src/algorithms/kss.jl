@@ -61,7 +61,7 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the subspace for an empty cluster)
 - `method::SubspaceEstimation.AbstractAlgorithm`: subspace estimation 
-    algorithm (default is [`DEFAULT_ALGORITHM`](@ref))
+    algorithm (default is set to [`SubspaceEstimation.SVD`](@ref))
 - `Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}}
     = [randsubspace(rng, size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use

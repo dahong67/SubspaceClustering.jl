@@ -1,5 +1,5 @@
 # API
 
 ```@autodocs
-Modules = [SubspaceClustering]
+Modules = [SubspaceClustering, SubspaceClustering.SubspaceEstimation]
 ```

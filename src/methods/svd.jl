@@ -1,10 +1,10 @@
 # Subspace Basis Estimation using SVD
 
 """
-    DEFAULT_ALGORITHM
+    Singular Value Decomposition (SVD)
 
-The default subspace basis estimation algorithm used by `kss`,
-set to [`SVD()`](@ref), which uses standard function from the Julia standard library.
+The default subspace basis estimation algorithm used by `kss` is
+set to SVD, which uses standard function from the Julia standard library.
 """
 Base.@kwdef struct SVD <:AbstractAlgorithm
 
