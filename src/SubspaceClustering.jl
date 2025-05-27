@@ -12,10 +12,11 @@ using ProgressLogging: @withprogress, @logprogress
 using Random: AbstractRNG, default_rng, randn!
 
 # Exports
-export KSSResult, kss
+export KSSResult, kss, SubspaceEstimation
 @compat public randsubspace
 
 # Algorithms
+include("methods.jl")
 include("algorithms/kss.jl")
 
 # Utility functions
