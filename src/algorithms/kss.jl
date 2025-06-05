@@ -63,6 +63,7 @@ and subspace basis matrices `U[1],...,U[K]`.
     = [randsubspace(rng, size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
     (each `Uinit[k]` should be `D×d[k]`)
+- `progress::Bool = false`: To log progress during the algorithm run
 
 See also [`KSSResult`](@ref).
 """
@@ -74,6 +75,7 @@ function kss(
     Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}} = [
         randsubspace(rng, size(X, 1), di) for di in d
     ],
+    progress::Bool = false,
 )
     # Require one-based indexing
     Base.require_one_based_indexing(X, d, Uinit)
@@ -138,7 +140,7 @@ function kss(
         copyto!(cprev, c)
 
         # Log progress
-        if iterations % (maxiters ÷ 100) == 0
+        if progress && iterations % (maxiters ÷ 100) == 0
             @logprogress iterations / maxiters
         end
     end
