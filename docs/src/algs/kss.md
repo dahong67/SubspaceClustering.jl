@@ -45,3 +45,10 @@ KSSResult
 !!! todo
 
     Write up example here
+
+### KSS with custom initialization coming from clusters
+
+!!! todo
+
+    Write up example here
+    where the subspace initialization is estimated from clusters

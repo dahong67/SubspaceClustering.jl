@@ -1,3 +1,6 @@
+"""
+Subspace clustering module. Provides algorithms for clustering data points by subspace.
+"""
 module SubspaceClustering
 
 # Imports
