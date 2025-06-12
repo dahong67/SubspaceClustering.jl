@@ -46,18 +46,18 @@ end
     
 end
 
-@testitem "randsubspace fallbacks" begin
+@testitem "randaffinespace fallbacks" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(5)
-    Q1, b1 = SubspaceClustering.randaffinespace(Float64, 6, 4)
+    Q1, b1 = SubspaceClustering.randaffinespace(rng, 6, 4)
     @test typeof(Q1)  == Matrix{Float64}
     @test typeof(b1) == Vector{Float64}
     @test isapprox(Q1' * Q1, I, atol=1e-10)
 
-    Q2, b2 = SubspaceClustering.randaffinespace(ComplexF64, 6, 4)
-    @test typeof(Q2)  == Matrix{ComplexF64}
-    @test typeof(b2) == Vector{ComplexF64}
+    Q2, b2 = SubspaceClustering.randaffinespace(6, 4)
+    @test typeof(Q2)  == Matrix{Float64}
+    @test typeof(b2) == Vector{Float64}
     @test isapprox(Q2' * Q2, I, atol=1e-10)
 
     U = randn(rng, Float64,  6, 4)

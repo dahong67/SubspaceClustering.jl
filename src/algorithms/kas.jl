@@ -62,8 +62,8 @@ with respect to the cluster assignments `c[1],...,c[N]`, affine space basis matr
 - `maxiters::Integer = 100`: maximum number of iterations
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the affine space for an empty cluster)
-- `init::AbstractVector{<:Tuple{<:AbstractMatrix{<:AbstractFloat}, <:AbstractVector{<:AbstractFloat}}}
-    = [randaffinespace(rng, size(X, 1), di) for di in d]`:
+- `init::AbstractVector{<:Tuple{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}, <:AbstractVector{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}}}
+    = [randaffinespace(rng, float(eltype(X)), size(X, 1), di) for di in d]`:
     vector of `K` initial pair of affine space basis matrices containing `U[1],...,U[K]`
     and bias vectors containing `b[1],...,b[K]`.
 
