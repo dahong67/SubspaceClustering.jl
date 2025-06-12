@@ -68,6 +68,6 @@ end
 
     Q4, b4 = SubspaceClustering.randaffinespace(Float64, 6, 4)
     @test typeof(Q4) == Matrix{Float64}
-    @test typeoof(b4) == Vector{Float64}
+    @test typeof(b4) == Vector{Float64}
     @test isapprox(Q4' * Q4, I, atol=1e-10)
 end
