@@ -4,8 +4,8 @@
 
 """
     KASResult{
-        TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
-        Tb<:AbstractVector{<:AbstractVector{<:AbstractFloat}},
+        TU<:AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}},
+        Tb<:AbstractVector{<:AbstractVector{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}},
         Tc<:AbstractVector{<:Integer},
         T<:Real}
 
@@ -23,8 +23,8 @@ The output of [`kas`](@ref).
 """
 
 struct KASResult{
-    TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
-    Tb<:AbstractVector{<:AbstractVector{<:AbstractFloat}},
+    TU<:AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}},
+    Tb<:AbstractVector{<:AbstractVector{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}},
     Tc<:AbstractVector{<:Integer},
     T<:Real,
 }
@@ -38,7 +38,7 @@ struct KASResult{
 end
 
 """
-    kas(X::AbstractMatrix{<:Real}, d::AbstractVector{<:Integer};
+    kas(X::AbstractMatrix{<:Number}, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
         init = [randaffinespace(rng, size(X, 1), di) for di in d])
@@ -71,12 +71,12 @@ See also [`KASResult`](@ref).
 """
 
 function kas(
-    X::AbstractMatrix{<:Real}, 
+    X::AbstractMatrix{<:Number}, 
     d::AbstractVector{<:Integer}; 
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    init::AbstractVector{<:Tuple{<:AbstractMatrix{<:AbstractFloat}, <:AbstractVector{<:AbstractFloat}}} = [
-        randaffinespace(rng, size(X, 1), di) for di in d
+    init::AbstractVector{<:Tuple{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}, <:AbstractVector{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}}} = [
+        randaffinespace(rng, float(eltype(X)), size(X, 1), di) for di in d
     ]
 )
 
@@ -142,7 +142,7 @@ function kas(
 				U[k], b[k] = kas_estimate_affinespace(view(X, :, inds), d[k])
 			else
 				@warn "Empty cluster detected at iteration $iterations - reinitializing the affine space. Consider reducing the number of clusters."
-                U[k], b[k] = randaffinespace(rng, D, d[k])
+                U[k], b[k] = randaffinespace(rng, eltype(X), D, d[k])
 			end
 		end
 
