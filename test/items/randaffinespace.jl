@@ -65,4 +65,9 @@ end
     Q3, b3 = SubspaceClustering.randaffinespace!(U, b)
     @test size(Q3) == (6, 4)
     @test isapprox(Q3' * Q3, I, atol=1e-10)
+
+    Q4, b4 = SubspaceClustering.randaffinespace(Float64, 6, 4)
+    @test typeof(Q4) == Matrix{Float64}
+    @test typeoof(b4) == Vector{Float64}
+    @test isapprox(Q4' * Q4, I, atol=1e-10)
 end
