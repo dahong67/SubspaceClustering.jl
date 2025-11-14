@@ -62,6 +62,4 @@ function randsubspace!(rng::AbstractRNG, U::AbstractMatrix)
 end
 randsubspace!(U::AbstractMatrix) = randsubspace!(default_rng(), U)
 
-
-
 end

@@ -3,7 +3,7 @@
 @testitem "Argument validation" begin
     using LinearAlgebra, StableRNGs
 
-    @testset "clusters > data points"  begin
+    @testset "clusters > data points" begin
         rng = StableRNG(1)
         X = randn(rng, 5, 30)
 
@@ -25,12 +25,11 @@
         @test_throws ArgumentError tsc(X, -1)
         @test_throws ArgumentError tsc(X, 1)
     end
-
 end
 
 @testitem "TSC: Basic functionality" begin
     using LinearAlgebra, StableRNGs
-    
+
     rng = StableRNG(4)
     D, N = 5, 40
     k = 4
@@ -42,5 +41,4 @@ end
     @test sum(result.counts) == N
     @test result.iterations <= 80
     @test size(result.U) == (k, k)
-
 end
