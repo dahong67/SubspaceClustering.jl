@@ -172,18 +172,18 @@ function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 10
 end
 
 """
-    tsc_embedding(A, k)
+    tsc_embedding(A, K)
 
-Compute the `k`-dimensional TSC embedding for the `N×N` affinity matrix `A`,
-returning a `k×N` matrix of embeddings.
+Compute the `K`-dimensional TSC embedding for the `N×N` affinity matrix `A`,
+returning a `K×N` matrix of embeddings.
 """
-function tsc_embedding(A, k)
+function tsc_embedding(A, K)
     # Compute node degrees and form Laplacian matrix `L` from `A`
     D = Diagonal(vec(sum(A; dims = 2)))
     L = Symmetric(I - (inv(sqrt(D)) * A * inv(sqrt(D))))
 
-    # Compute eigenvectors corresponding to `k` smallest eigenvalues
-    decomp, history = partialschur(L; nev = k, which = :SR)
+    # Compute eigenvectors corresponding to `K` smallest eigenvalues
+    decomp, history = partialschur(L; nev = K, which = :SR)
     history.converged ||
         @warn "Iterative algorithm for threshold subspace did not converge - results may be inaccurate."
 
