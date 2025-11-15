@@ -5,7 +5,7 @@ module SubspaceClustering
 
 # Imports
 using ArnoldiMethod: partialschur
-using Clustering: kmeans
+using Clustering: kmeans, KmeansResult
 using Compat
 using SparseArrays: sparse
 using LinearAlgebra: mul!, norm, svd!, Diagonal, Symmetric, I, normalize
