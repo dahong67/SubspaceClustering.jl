@@ -84,17 +84,7 @@ function tsc(X::AbstractMatrix{<:Real}, k::Integer; maxiters::Integer = 100)
 
     # Affinity matrix
     S = tsc_affinity(X; chunksize = 1000)
-
-    # Compute node degrees and form Laplacian matrix
-    D = Diagonal(vec(sum(S; dims = 2)))
-    D_sqrinv = sqrt(inv(D))
-    L_sym = Symmetric(I - (D_sqrinv * S * D_sqrinv))
-
-    # Compute eigenvectors
-    decomp, history = partialschur(L_sym; nev = k, which = :SR)
-    history.converged ||
-        @warn "Iterative algorithm for threshold subspace did not converge - results may be inaccurate."
-    V = mapslices(normalize, decomp.Q; dims = 2)
+    V = tsc_embedding(S, k)
 
     # Compute cluster assignments via k-means
     result = kmeans(permutedims(V), k; maxiter = maxiters)
@@ -169,4 +159,27 @@ function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 10
     A_vals = [Z_vals; Z_vals]
     A = sparse(A_rows, A_cols, A_vals, N, N, +)
     return A
+end
+
+"""
+    tsc_embedding(A, k)
+
+Compute the `k`-dimensional TSC embedding for the `N×N` affinity matrix `A`,
+returning a `k×N` matrix of embeddings.
+"""
+function tsc_embedding(A, k)
+    # Compute node degrees and form Laplacian matrix `L` from `A`
+    D = Diagonal(vec(sum(A; dims = 2)))
+    L = Symmetric(I - (inv(sqrt(D)) * A * inv(sqrt(D))))
+
+    # Compute eigenvectors corresponding to `k` smallest eigenvalues
+    decomp, history = partialschur(L; nev = k, which = :SR)
+    history.converged ||
+        @warn "Iterative algorithm for threshold subspace did not converge - results may be inaccurate."
+
+    # Permute and normalize to obtain embeddings
+    E = mapslices(normalize, permutedims(decomp.Q); dims = 1)
+
+    # Return the embeddings
+    return E
 end
