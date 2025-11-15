@@ -83,7 +83,7 @@ function tsc(X::AbstractMatrix{<:Real}, k::Integer; maxiters::Integer = 100)
     )
 
     # Affinity matrix
-    S = affinity(X; chunksize = 1000)
+    S = tsc_affinity(X; chunksize = 1000)
 
     # Compute node degrees and form Laplacian matrix
     D = Diagonal(vec(sum(S; dims = 2)))
@@ -108,52 +108,65 @@ function tsc(X::AbstractMatrix{<:Real}, k::Integer; maxiters::Integer = 100)
     return TSCResult(U, c, iterations, totalcost, counts, converged)
 end
 
+# Subroutines
+
 """
-    affinity(X::AbstractMatrix; max_nz::Integer=30, chunksize::Integer=isqrt(size(X,2)))
+    tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 1000)
 
-Compute a **sparse**, **symmetric** cosine-angle affinity matrix for the data points in `D×N` data matrix `X`
-and return a `N×N` size sparsematrix of type `SparseMatrixCSC{Float64, Int64}`  with `max_nz` values per row/column .
+Compute the sparse TSC affinity (i.e., adjacency) matrix for the `N` data points in `X`
+formed by thresholding their pairwise absolute cosine similarities at `max_nz` neighbors
+then symmetrizing.
 
-# Keyword arguments
-- `max_nz::Integer = 30`: maximum number of nonzero values per row/column
-- `chunksize::Integer = isqrt(size(X,2))`: Number of columnns to process at a time when computing pairwise cosine. 
+To handle datasets with a large number of points `N`, the computation is performed
+over chunks of at most `max_chunksize` points at a time.
+
+See also [`tsc`](@ref).
 """
-function affinity(
-    X::AbstractMatrix{<:Real};
-    max_nz::Integer = 30,
-    chunksize::Integer = isqrt(size(X, 2)),
-)
-    func = c -> exp(-2 * acos(clamp(abs(c), -1, 1)))
+function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 1000)
+    # Precompute normalized data points and extract needed dims
+    Y = mapslices(normalize, X; dims = 1)
+    N = size(X, 2)
 
-    # Compute normalized spectra (so that inner product = cosine of angle)
-    X = mapslices(normalize, X; dims = 1)
+    # Compute nonzero values of thresholded similarity matrix Z in chunks
+    chunksize = min(max_chunksize, N)
+    C_buf = similar(Y, N, chunksize)    # buffer for pairwise absolute cosine similarities
+    s_buf = Vector{Int}(undef, N)       # buffer for sorting
+    chunks = Iterators.partition(1:N, chunksize)
+    Z_nzs = @withprogress mapreduce(vcat, enumerate(chunks)) do (chunk_idx, chunk)
+        # Compute pairwise absolute cosine similarities for chunk using appropriate buffer
+        C_chunk = length(chunk) == chunksize ? C_buf : similar(Y, N, length(chunk))
+        mul!(C_chunk, Y', view(Y, :, chunk))
+        C_chunk .= abs.(C_chunk)
 
-    # Find nonzero values (in chunks)
-    C_buf = similar(X, size(X, 2), chunksize)    # pairwise cosine buffer
-    s_buf = Vector{Int}(undef, size(X, 2))       # sorting buffer
-    nz_list = @withprogress mapreduce(
-        vcat,
-        enumerate(Iterators.partition(1:size(X, 2), chunksize)),
-    ) do (chunk_idx, chunk)
+        # Identify at most `max_nz` largest values to keep for each column `c` in chunk
+        q = min(max_nz, N)
+        Z_nzs_chunk = map(chunk, eachcol(C_chunk)) do col, c
+            # Zero out the self-loop in `c`
+            c[col] = zero(eltype(c))
 
-        # Compute cosine angles (for chunk) and store in appropriate buffer
-        C_chunk = length(chunk) == chunksize ? C_buf : similar(X, size(X, 2), length(chunk))
-        mul!(C_chunk, X', view(X, :, chunk))
+            # Find indices for the `q` largest values in `c`
+            inds = partialsortperm!(s_buf, c, 1:q; rev = true)
 
-        # Zero out all but `max_nz` largest values
-        nzs = map(chunk, eachcol(C_chunk)) do col, c
-            idx = partialsortperm!(s_buf, c, 1:max_nz; rev = true)
-            return collect(idx), fill(col, max_nz), func.(view(c, idx))
+            # Return corresponding rows, columns and values
+            return (;
+                rows = copy(inds),
+                cols = fill(col, q),
+                vals = exp.(-2 .* acos.(min.(view(c, inds), oneunit(eltype(c))))),
+            )
         end
 
-        # Log progress and return
-        @logprogress chunk_idx / cld(size(X, 2), chunksize)
-        return nzs
+        # Update progress bar and return
+        @logprogress chunk_idx / cld(N, chunksize)
+        return Z_nzs_chunk
     end
+    Z_rows = reduce(vcat, getindex.(Z_nzs, :rows))
+    Z_cols = reduce(vcat, getindex.(Z_nzs, :cols))
+    Z_vals = reduce(vcat, getindex.(Z_nzs, :vals))
 
-    # Form and return sparse array
-    rows = reduce(vcat, getindex.(nz_list, 1))
-    cols = reduce(vcat, getindex.(nz_list, 2))
-    vals = reduce(vcat, getindex.(nz_list, 3))
-    return sparse([rows; cols], [cols; rows], [vals; vals])
+    # Form and return affinity matrix corresponding to Z+Z'
+    A_rows = [Z_rows; Z_cols]
+    A_cols = [Z_cols; Z_rows]
+    A_vals = [Z_vals; Z_vals]
+    A = sparse(A_rows, A_cols, A_vals, N, N, +)
+    return A
 end
