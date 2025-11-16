@@ -30,18 +30,12 @@
     end
 end
 
-@testitem "TSC: Basic functionality" begin
+@testitem "Basic noiseless case" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(4)
-    D, N = 5, 40
-    k = 4
-    X = randn(rng, D, N)
-    result = tsc(X, k; maxiters = 80)
+    X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 4) for _ in 1:3])
+    result = tsc(X, 3; rng)
 
-    @test length(result.c) == N
-    @test length(result.counts) == k
-    @test sum(result.counts) == N
-    @test result.iterations <= 80
-    @test size(result.U) == (k, k)
+    @test Set([findall(==(k), result.assignments) for k in 1:3]) == Set([1:4, 5:8, 9:12])
 end
