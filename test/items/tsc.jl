@@ -3,27 +3,30 @@
 @testitem "Argument validation" begin
     using LinearAlgebra, StableRNGs
 
-    @testset "clusters > data points" begin
-        rng = StableRNG(1)
-        X = randn(rng, 5, 30)
-
-        @test_throws ArgumentError tsc(X, 40)
-    end
-
-    @testset "invalid number of iterations" begin
-        rng = StableRNG(2)
-        X = randn(rng, 5, 20)
-
-        @test_throws ArgumentError tsc(X, 3; maxiters = -1)
-    end
-
     @testset "invalid number of clusters" begin
-        rng = StableRNG(3)
-        X = randn(rng, 5, 40)
-
+        rng = StableRNG(4)
+        X = randn(rng, 5, 20)
         @test_throws ArgumentError tsc(X, 0)
         @test_throws ArgumentError tsc(X, -1)
-        @test_throws ArgumentError tsc(X, 1)
+        @test_throws ArgumentError tsc(X, size(X, 2) + 1)
+    end
+
+    @testset "invalid maximum number of neighbors" begin
+        rng = StableRNG(4)
+        X = randn(rng, 5, 20)
+        @test_throws ArgumentError tsc(X, 2; max_nz = 0)
+    end
+
+    @testset "invalid maximum chunk size" begin
+        rng = StableRNG(4)
+        X = randn(rng, 5, 20)
+        @test_throws ArgumentError tsc(X, 2; max_chunksize = 0)
+    end
+
+    @testset "invalid number of K-means runs" begin
+        rng = StableRNG(4)
+        X = randn(rng, 5, 20)
+        @test_throws ArgumentError tsc(X, 2; kmeans_nruns = 0)
     end
 end
 
