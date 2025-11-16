@@ -91,8 +91,8 @@ function tsc(
     @info "Forming affinity matrix"
     A = tsc_affinity(X; max_nz, max_chunksize)
 
-    # Form embedding
-    @info "Forming embedding"
+    # Compute embedding
+    @info "Computing embedding"
     E = tsc_embedding(A, K)
 
     # Compute cluster assignments via batched K-means
