@@ -185,7 +185,7 @@ function tsc_embedding(A, K)
     # Compute eigenvectors corresponding to `K` smallest eigenvalues
     decomp, history = partialschur(L; nev = K, which = :SR)
     history.converged ||
-        @warn "Iterative algorithm for threshold subspace did not converge - results may be inaccurate."
+        @warn "Iterative algorithm for eigenvectors did not converge - results may be inaccurate."
 
     # Permute and normalize to obtain embeddings
     E = mapslices(normalize, permutedims(decomp.Q); dims = 1)
