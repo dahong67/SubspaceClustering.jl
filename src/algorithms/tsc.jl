@@ -33,7 +33,7 @@ end
 
 """
     tsc(X::AbstractMatrix{<:Real}, K::Integer;
-        max_nz = max(4, cld(size(X, 2), K)),
+        max_nz = max(4, cld(size(X, 2), max(1, K))),
         max_chunksize = 1000,
         rng = default_rng(),
         kmeans_nruns = 10,
@@ -52,7 +52,7 @@ at `max_nz` neighbors then symmetrizing. Cluster assignments are then obtained
 via normalized spectral clustering of the graph.
 
 # Keyword arguments
-- `max_nz::Integer = max(4, cld(size(X, 2), K))`: maximum number of neighbors
+- `max_nz::Integer = max(4, cld(size(X, 2), max(1, K)))`: maximum number of neighbors
 - `max_chunksize::Integer = 1000`: chunk size used in [`tsc_affinity`](@ref)
 - `rng::AbstractRNG = default_rng()`: random number generator used by K-means
 - `kmeans_nruns::Integer = 10`: number of K-means runs to perform
@@ -63,7 +63,7 @@ See also [`TSCResult`](@ref), [`tsc_affinity`](@ref), [`tsc_embedding`](@ref).
 function tsc(
     X::AbstractMatrix{<:Real},
     K::Integer;
-    max_nz::Integer = max(4, cld(size(X, 2), K)),
+    max_nz::Integer = max(4, cld(size(X, 2), max(1, K))),
     max_chunksize::Integer = 1000,
     rng::AbstractRNG = default_rng(),
     kmeans_nruns::Integer = 10,
