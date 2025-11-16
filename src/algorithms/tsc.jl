@@ -104,7 +104,7 @@ function tsc(
     end
 
     # Extract assignments from best K-means run and return TSCResult
-    assignments = argmax(result -> result.totalcost, results).assignments
+    assignments = argmin(result -> result.totalcost, results).assignments
     return TSCResult(A, E, results, assignments)
 end
 
