@@ -1,7 +1,7 @@
 # tsc function
 
 @testitem "Argument validation" begin
-    using LinearAlgebra, StableRNGs
+    using LinearAlgebra, StableRNGs, SubspaceClustering
 
     @testset "invalid number of clusters" begin
         rng = StableRNG(4)
@@ -31,7 +31,7 @@
 end
 
 @testitem "Basic noiseless case" begin
-    using LinearAlgebra, StableRNGs
+    using LinearAlgebra, StableRNGs, SubspaceClustering
 
     rng = StableRNG(4)
     X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 4) for _ in 1:3])
