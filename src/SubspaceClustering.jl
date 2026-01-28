@@ -5,13 +5,13 @@ module SubspaceClustering
 
 # Imports
 using ArnoldiMethod: partialschur
-using Clustering: kmeans, KmeansResult
+using Clustering: KmeansResult, kmeans
 using Compat: Compat, @compat
-using SparseArrays: sparse
-using LinearAlgebra: mul!, svd!, Diagonal, Symmetric, I, normalize
+using LinearAlgebra: Diagonal, I, Symmetric, mul!, normalize, svd!
 using Logging: @info, @warn
-using ProgressLogging: @withprogress, @logprogress
+using ProgressLogging: @logprogress, @withprogress
 using Random: AbstractRNG, default_rng, randn!
+using SparseArrays: sparse
 
 # Exports
 export KSSResult, kss, TSCResult, tsc
