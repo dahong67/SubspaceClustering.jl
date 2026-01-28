@@ -1,7 +1,7 @@
 # kss function
 
 @testitem "Random data with 2 clusters with same subspace dimensions" begin
-    using LinearAlgebra, StableRNGs, SubspaceClustering
+    using LinearAlgebra, StableRNGs
 
     rng = StableRNG(0)
     D, N = 5, 20
@@ -21,7 +21,7 @@
 end
 
 @testitem "Random data with 3 clusters with different subspace dimensions" begin
-    using LinearAlgebra, StableRNGs, SubspaceClustering
+    using LinearAlgebra, StableRNGs
 
     rng = StableRNG(1)
     D, N = 5, 20
@@ -42,7 +42,7 @@ end
 end
 
 @testitem "Empty cluster case" begin
-    using LinearAlgebra, StableRNGs, SubspaceClustering
+    using LinearAlgebra, StableRNGs
 
     rng = StableRNG(2)
     D, N = 5, 20
@@ -57,7 +57,7 @@ end
 end
 
 @testitem "Nontrivial cluster case with noise" begin
-    using LinearAlgebra, StableRNGs, SubspaceClustering
+    using LinearAlgebra, StableRNGs
 
     rng = StableRNG(3)
     D, N = 7, 20
@@ -80,7 +80,7 @@ end
 end
 
 @testitem "Argument validation" begin
-    using LinearAlgebra, StableRNGs, SubspaceClustering
+    using LinearAlgebra, StableRNGs
 
     @testset "subspace dimension > ambient dimension" begin
         rng = StableRNG(4)
