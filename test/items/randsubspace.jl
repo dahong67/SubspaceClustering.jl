@@ -32,7 +32,7 @@ end
     Q = SubspaceClustering.randsubspace(Float32, 5, 3)
     @test eltype(Q) == Float32
     @test size(Q) == (5, 3)
-    @test isapprox(Q' * Q, I, atol = 1e-6)
+    @test isapprox(Q' * Q, I)
 end
 
 @testitem "randsubspace with default parameters" begin
@@ -43,7 +43,7 @@ end
     Q = SubspaceClustering.randsubspace(4, 2)
     @test eltype(Q) == Float64
     @test size(Q) == (4, 2)
-    @test isapprox(Q' * Q, I, atol = 1e-10)
+    @test isapprox(Q' * Q, I)
 end
 
 @testitem "randsubspace! with default rng" begin
@@ -55,5 +55,5 @@ end
     result = SubspaceClustering.randsubspace!(U)
     @test result === U  # Should return the same matrix
     @test size(U) == (5, 3)
-    @test isapprox(U' * U, I, atol = 1e-10)
+    @test isapprox(U' * U, I)
 end
