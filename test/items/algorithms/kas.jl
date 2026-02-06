@@ -102,14 +102,24 @@ end
         rng = StableRNG(4)
         X = randn(rng, 5, 60)
         d = [6, 7]
-        @test_throws DimensionMismatch kas(X, d)
+        # Create init matrices that have the right number of columns (6 and 7)
+        # but wrong ambient dimension
+        U1 = randn(rng, 5, 6)  # 5×6 matrix - has d[1]=6 cols
+        b1 = zeros(5)
+        U2 = randn(rng, 5, 7)  # 5×7 matrix - has d[2]=7 cols  
+        b2 = zeros(5)
+        @test_throws DimensionMismatch kas(X, d; init=[(U1, b1), (U2, b2)])
     end
     
     @testset "invalid affine space dimension" begin
         rng = StableRNG(5)
         X = randn(rng, 5, 80)
-        d = [0, -1]
-        @test_throws DimensionMismatch kas(X, d)
+        d = [2, -1]  # Use valid first dimension, invalid second
+        U1 = SubspaceClustering.randsubspace(rng, 5, 2)
+        b1 = zeros(5)
+        U2 = randn(rng, 5, 0)  # 5×0 matrix - has d[2]=0 cols, but d[2]=-1 is invalid
+        b2 = zeros(5)
+        @test_throws ArgumentError kas(X, d; init=[(U1, b1), (U2, b2)])  # Will fail on column check since -1 != 0
     end
 
     @testset "invalid number of iterations" begin
