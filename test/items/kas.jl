@@ -55,9 +55,11 @@ end
     rng = StableRNG(2)
     D, N = 7, 30
     d = [2, 3]
-    U1, b1 = SubspaceClustering.randaffinespace(rng, D, d[1])
+    U1 = SubspaceClustering.randsubspace(rng, D, d[1])
+    b1 = zeros(D)
     X = U1 * randn(rng, d[1], N) .+ b1
-    U2, b2 = SubspaceClustering.randaffinespace(rng, D, d[2])
+    U2 = SubspaceClustering.randsubspace(rng, D, d[2])
+    b2 = zeros(D)
     result = kas(X, d; init=[(U1, b1), (U2, b2)])
     U, b, c = result.U, result.b, result.c
 
@@ -71,8 +73,10 @@ end
     rng = StableRNG(3)
     D, N = 8, 40
     d = [3, 4]
-    U1, b1 = SubspaceClustering.randaffinespace(rng, D, d[1])
-    U2, b2 = SubspaceClustering.randaffinespace(rng, D, d[2])
+    U1 = SubspaceClustering.randsubspace(rng, D, d[1])
+    b1 = zeros(D)
+    U2 = SubspaceClustering.randsubspace(rng, D, d[2])
+    b2 = zeros(D)
     X = hcat(
         U1 * randn(rng, d[1], N) .+ b1,
         U2 * randn(rng, d[2], N) .+ b2,
@@ -98,14 +102,14 @@ end
         rng = StableRNG(4)
         X = randn(rng, 5, 60)
         d = [6, 7]
-        @test_throws ArgumentError kas(X, d)
+        @test_throws DimensionMismatch kas(X, d)
     end
     
     @testset "invalid affine space dimension" begin
         rng = StableRNG(5)
         X = randn(rng, 5, 80)
         d = [0, -1]
-        @test_throws ArgumentError kas(X, d)
+        @test_throws DimensionMismatch kas(X, d)
     end
 
     @testset "invalid number of iterations" begin
@@ -114,4 +118,21 @@ end
         d = [2, 3]
         @test_throws ArgumentError kas(X, d; maxiters = -1)
     end
+end
+
+@testitem "Bias vector validation" begin
+    using LinearAlgebra, StableRNGs
+
+    rng = StableRNG(7)
+    D, N = 5, 20
+    X = randn(rng, D, N)
+    d = [2, 2]
+    result = kas(X, d)
+    b = result.b
+
+    # Test that bias vectors are not NaN
+    @test all(!isnan(val) for bias in b for val in bias)
+    
+    # Test that bias vectors are finite
+    @test all(isfinite(val) for bias in b for val in bias)
 end
