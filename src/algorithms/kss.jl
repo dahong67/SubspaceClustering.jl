@@ -138,7 +138,11 @@ function kss(
         copyto!(cprev, c)
 
         # Log progress
-        if iterations % (maxiters ÷ 100) == 0
+        if maxiters ≥ 100
+            if iterations % (maxiters ÷ 100) == 0
+                @logprogress iterations / maxiters
+            end
+        else
             @logprogress iterations / maxiters
         end
     end
