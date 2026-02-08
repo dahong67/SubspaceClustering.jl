@@ -138,13 +138,12 @@ function kss(
         copyto!(cprev, c)
 
         # Log progress
-        if maxiters ≥ 100
-            if iterations % (maxiters ÷ 100) == 0
-                @logprogress iterations / maxiters
-            end
-        else
+        log_interval = max(1, maxiters ÷ 100)
+        
+        if iterations % log_interval == 0
             @logprogress iterations / maxiters
         end
+
     end
 
     # Compute final counts and costs
