@@ -71,13 +71,13 @@ See also [`KASResult`](@ref).
 """
 
 function kas(
-    X::AbstractMatrix{<:Real}, 
-    d::AbstractVector{<:Integer}; 
+    X::AbstractMatrix{<:Real},
+    d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    init::AbstractVector{<:Tuple{<:AbstractMatrix{<:AbstractFloat}, <:AbstractVector{<:AbstractFloat}}} = [
-        randaffinespace(rng, size(X, 1), di) for di in d
-    ]
+    init::AbstractVector{
+        <:Tuple{<:AbstractMatrix{<:AbstractFloat},<:AbstractVector{<:AbstractFloat}},
+    } = [randaffinespace(rng, size(X, 1), di) for di in d],
 )
 
     # Unpack the initial affine space basis matrices and bias vectors
@@ -94,7 +94,7 @@ function kas(
     end
 
     # Extract sizes and check that they agree
-	K = (only ∘ unique)([length(d), length(binit)])
+    K = (only ∘ unique)([length(d), length(binit)])
     D = (only ∘ unique)([size(X, 1); size.(Uinit, 1)])
 
     # Check affine space dimensions
@@ -123,31 +123,30 @@ function kas(
         ),
     )
 
-	# Initialize Model parameters
-	U = deepcopy(Uinit)
-	b = deepcopy(binit)
+    # Initialize Model parameters
+    U = deepcopy(Uinit)
+    b = deepcopy(binit)
     c = kas_assign_clusters(U, b, X)
-	
 
-	# Main loop
+    # Main loop
     cprev = copy(c)
     iterations, converged = 0, false
-	@withprogress while iterations < maxiters && !converged
+    @withprogress while iterations < maxiters && !converged
         iterations += 1
 
-		# Update Affine space basis and base vectors
-		for k in 1:K
-			inds = findall(==(k), c)
-			if !isempty(inds)
-				U[k], b[k] = kas_estimate_affinespace(view(X, :, inds), d[k])
-			else
-				@warn "Empty cluster detected at iteration $iterations - reinitializing the affine space. Consider reducing the number of clusters."
+        # Update Affine space basis and base vectors
+        for k in 1:K
+            inds = findall(==(k), c)
+            if !isempty(inds)
+                U[k], b[k] = kas_estimate_affinespace(view(X, :, inds), d[k])
+            else
+                @warn "Empty cluster detected at iteration $iterations - reinitializing the affine space. Consider reducing the number of clusters."
                 U[k], b[k] = randaffinespace(rng, D, d[k])
-			end
-		end
+            end
+        end
 
-		# Update cluster assignments
-		kas_assign_clusters!(c, U, b, X)
+        # Update cluster assignments
+        kas_assign_clusters!(c, U, b, X)
 
         # Check for convergence
         if cprev == c
@@ -160,13 +159,16 @@ function kas(
         if iterations % (maxiters ÷ 100) == 0
             @logprogress iterations / maxiters
         end
-	end
+    end
 
     # Compute final counts and costs
     counts = [count(==(k), c) for k in 1:K]
-    costs = [sum(abs2, (xi - b[c[i]])) - sum(abs2, U[c[i]]' * (xi - b[c[i]])) for (i, xi) in pairs(eachcol(X))]
+    costs = [
+        sum(abs2, (xi - b[c[i]])) - sum(abs2, U[c[i]]' * (xi - b[c[i]])) for
+        (i, xi) in pairs(eachcol(X))
+    ]
 
-	return KASResult(U, b, c, iterations, sum(costs), counts, converged)
+    return KASResult(U, b, c, iterations, sum(costs), counts, converged)
 end
 
 """
@@ -178,7 +180,8 @@ and return a vector of the assignments.
 See also [`kas_assign_clusters!`](@ref), [`kas`](@ref).
 """
 
-kas_assign_clusters(U, b, X) = kas_assign_clusters!(similar(Vector{Int}, (axes(X, 2),)), U, b, X)
+kas_assign_clusters(U, b, X) =
+    kas_assign_clusters!(similar(Vector{Int}, (axes(X, 2),)), U, b, X)
 
 """
     kas_assign_clusters!(c, U, X)
@@ -191,8 +194,10 @@ See also [`kas_assign_clusters`](@ref), [`kas`](@ref).
 """
 
 function kas_assign_clusters!(c, U, b, X)
-    for (i, xi)  in pairs(eachcol(X))
-        c[i] = argmin(sum(abs2, (xi - b[k])) - sum(abs2, U[k]' * (xi - b[k])) for k in eachindex(U))
+    for (i, xi) in pairs(eachcol(X))
+        c[i] = argmin(
+            sum(abs2, (xi - b[k])) - sum(abs2, U[k]' * (xi - b[k])) for k in eachindex(U)
+        )
     end
     return c
 end
@@ -207,6 +212,6 @@ See also [`kas`](@ref).
 
 function kas_estimate_affinespace(Xk, dk)
     bhat = mean(eachcol(Xk))
-    Uhat = svd(Xk - bhat*ones(size(Xk, 2))'; full=true).U[:, 1:dk]
+    Uhat = svd(Xk - bhat * ones(size(Xk, 2))'; full = true).U[:, 1:dk]
     return Uhat, bhat
 end

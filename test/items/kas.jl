@@ -58,14 +58,13 @@ end
     U1, b1 = SubspaceClustering.randaffinespace(rng, D, d[1])
     X = U1 * randn(rng, d[1], N) .+ b1
     U2, b2 = SubspaceClustering.randaffinespace(rng, D, d[2])
-    result = kas(X, d; init=[(U1, b1), (U2, b2)])
+    result = kas(X, d; init = [(U1, b1), (U2, b2)])
     U, b, c = result.U, result.b, result.c
 
     @test isempty(findall(==(2), c))
-
 end
 
-@testitem "Nontrivial cluster case with noise"  begin
+@testitem "Nontrivial cluster case with noise" begin
     using LinearAlgebra, StableRNGs
 
     rng = StableRNG(3)
@@ -73,11 +72,10 @@ end
     d = [3, 4]
     U1, b1 = SubspaceClustering.randaffinespace(rng, D, d[1])
     U2, b2 = SubspaceClustering.randaffinespace(rng, D, d[2])
-    X = hcat(
-        U1 * randn(rng, d[1], N) .+ b1,
-        U2 * randn(rng, d[2], N) .+ b2,
-    ) .+ 0.01 * randn(rng, D, 2N)
-    result = kas(X, d; init=[(U1, b1), (U2, b2)])
+    X =
+        hcat(U1 * randn(rng, d[1], N) .+ b1, U2 * randn(rng, d[2], N) .+ b2) .+
+        0.01 * randn(rng, D, 2N)
+    result = kas(X, d; init = [(U1, b1), (U2, b2)])
     U, b, c = result.U, result.b, result.c
 
     # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
@@ -88,7 +86,6 @@ end
     for k in 1:length(d)
         @test !isempty(findall(==(k), c))
     end
-
 end
 
 @testitem "Argument validation" begin
@@ -100,7 +97,7 @@ end
         d = [6, 7]
         @test_throws ArgumentError kas(X, d)
     end
-    
+
     @testset "invalid affine space dimension" begin
         rng = StableRNG(5)
         X = randn(rng, 5, 80)

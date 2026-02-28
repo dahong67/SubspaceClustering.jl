@@ -70,13 +70,18 @@ so that `(U, b)` defines a random `d`-dimensional affine subspace in `ℝ^D`.
 See also [`randaffinespace`](@ref)
 """
 
-randaffinespace(rng::AbstractRNG, ::Type{T}, D::Integer, d::Integer) where {T<:AbstractFloat} =
+randaffinespace(
+    rng::AbstractRNG,
+    ::Type{T},
+    D::Integer,
+    d::Integer,
+) where {T<:AbstractFloat} =
     randaffinespace!(rng, Array{T}(undef, D, d), Array{T}(undef, D))
 randaffinespace(::Type{T}, D::Integer, d::Integer) where {T<:AbstractFloat} =
     randaffinespace(default_rng(), T, D, d)
-randaffinespace(rng::AbstractRNG, D::Integer, d::Integer) = randaffinespace(rng, Float64, D, d)
+randaffinespace(rng::AbstractRNG, D::Integer, d::Integer) =
+    randaffinespace(rng, Float64, D, d)
 randaffinespace(D::Integer, d::Integer) = randaffinespace(default_rng(), Float64, D, d)
-
 
 function randaffinespace!(rng::AbstractRNG, U::AbstractMatrix, b::AbstractVector)
     # Check arguments
@@ -104,6 +109,7 @@ function randaffinespace!(rng::AbstractRNG, U::AbstractMatrix, b::AbstractVector
     return U, b
 end
 
-randaffinespace!(U::AbstractMatrix, b::AbstractVector) = randaffinespace!(default_rng(), U, b)
+randaffinespace!(U::AbstractMatrix, b::AbstractVector) =
+    randaffinespace!(default_rng(), U, b)
 
 end
