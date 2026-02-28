@@ -14,12 +14,13 @@ using Random: AbstractRNG, default_rng, randn!
 using SparseArrays: sparse
 
 # Exports
-export KSSResult, kss, TSCResult, tsc
+export KSSResult, kss, TSCResult, tsc, EKSSResult, ekss
 @compat public randsubspace
 
 # Algorithms
 include("algorithms/kss.jl")
 include("algorithms/tsc.jl")
+include("algorithms/ekss.jl")
 
 # Utility functions
 include("utils/randsubspace.jl")
