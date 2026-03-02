@@ -44,11 +44,12 @@ end
         init = [(randsubspace(rng, size(X, 1), di), zeros(size(X, 1))) for di in d])
 
 Cluster the `N` data points in the `D×N` data matrix `X`
-into `K` clusters via the K-Affinespaces (KAS) algorithm
+into `K` clusters via the **K**-**a**ffine-**s**paces (KAS) algorithm
 with corresponding affine space dimensions `d[1],...,d[K]`.
 Output is a [`KASResult`](@ref) containing the resulting
 cluster assignments `c[1],...,c[N]`,
-affine space basis matrices `U[1],...,U[K]`, bias vectors `b[1],...,b[K]`,
+affine space basis matrices `U[1],...,U[K]`,
+bias vectors `b[1],...,b[K]`,
 and metadata about the algorithm run.
 
 KAS seeks to cluster data points by their affine space
@@ -56,7 +57,9 @@ by minimizing the following total cost
 ```math
 \\sum_{i=1}^N \\| X[:, i] - (U[c[i]] U[c[i]]' (X[:, i] - b[c[i]]) + b[c[i]]) \\|_2^2
 ```
-with respect to the cluster assignments `c[1],...,c[N]`, affine space basis matrices `U[1],...,U[K]`, and bias vectors `b[1],...,b[K]`.
+with respect to the cluster assignments `c[1],...,c[N]`,
+affine space basis matrices `U[1],...,U[K]`,
+and bias vectors `b[1],...,b[K]`.
 
 # Keyword arguments
 - `maxiters::Integer = 100`: maximum number of iterations
@@ -78,7 +81,6 @@ function kas(
         <:Tuple{<:AbstractMatrix{<:AbstractFloat},<:AbstractVector{<:AbstractFloat}},
     } = [(randsubspace(rng, size(X, 1), di), zeros(size(X, 1))) for di in d],
 )
-
     # Unpack the initial affine space basis matrices and bias vectors
     Uinit = first.(init)
     binit = last.(init)
@@ -122,19 +124,19 @@ function kas(
         ),
     )
 
-    # Initialize Model parameters
+    # Initialize model parameters
     U = deepcopy(Uinit)
     b = deepcopy(binit)
     c = kas_assign_clusters(U, b, X)
 
     # Main loop
     cprev = copy(c)
-    log_every = max(1, maxiters ÷ 100)
     iterations, converged = 0, false
+    log_every = max(1, maxiters ÷ 100)
     @withprogress while iterations < maxiters && !converged
         iterations += 1
 
-        # Update affine space basis and bias vectors
+        # Update affine space basis matrices and bias vectors
         for k in 1:K
             inds = findall(==(k), c)
             if !isempty(inds)
@@ -176,7 +178,7 @@ end
 """
     kas_assign_clusters(U, b, X)
 
-Assign the `N` data points in `X` to the `K` affine spaces in (`U`, `b`)
+Assign the `N` data points in `X` to the `K` affine spaces in `(U,b)`
 and return a vector of the assignments.
 
 See also [`kas_assign_clusters!`](@ref), [`kas`](@ref).
@@ -187,7 +189,7 @@ kas_assign_clusters(U, b, X) =
 """
     kas_assign_clusters!(c, U, b, X)
 
-Assign the `N` data points in `X` to the `K` affine spaces in (`U`, `b`),
+Assign the `N` data points in `X` to the `K` affine spaces in `(U,b)`,
 update the vector of assignments `c`,
 and return this vector of assignments.
 
