@@ -35,6 +35,8 @@ struct KASResult{
     converged::Bool
 end
 
+# Main function
+
 """
     kas(X::AbstractMatrix{<:Real}, d::AbstractVector{<:Integer};
         maxiters = 100,
@@ -168,6 +170,8 @@ function kas(
 
     return KASResult(U, b, c, iterations, sum(costs), counts, converged)
 end
+
+# Subroutines
 
 """
     kas_assign_clusters(U, b, X)
