@@ -213,6 +213,6 @@ See also [`kas`](@ref).
 
 function kas_estimate_affinespace(Xk, dk)
     bhat = mean(eachcol(Xk))
-    Uhat = svd(Xk .- bhat; full = true).U[:, 1:dk]
+    Uhat = svd!(Xk .- bhat; full = true).U[:, 1:dk]
     return Uhat, bhat
 end
