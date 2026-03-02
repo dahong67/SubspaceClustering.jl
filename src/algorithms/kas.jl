@@ -9,7 +9,6 @@
         Tc<:AbstractVector{<:Integer},
         T<:Real}
 
-
 The output of [`kas`](@ref).
 
 # Fields
@@ -21,7 +20,6 @@ The output of [`kas`](@ref).
 - `counts::Vector{Int}`: vector of cluster sizes `counts[1],...,counts[K]`
 - `converged::Bool`: final convergence status
 """
-
 struct KASResult{
     TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
     Tb<:AbstractVector{<:AbstractVector{<:AbstractFloat}},
@@ -69,7 +67,6 @@ with respect to the cluster assignments `c[1],...,c[N]`, affine space basis matr
 
 See also [`KASResult`](@ref).
 """
-
 function kas(
     X::AbstractMatrix{<:Real},
     d::AbstractVector{<:Integer};
@@ -180,7 +177,6 @@ and return a vector of the assignments.
 
 See also [`kas_assign_clusters!`](@ref), [`kas`](@ref).
 """
-
 kas_assign_clusters(U, b, X) =
     kas_assign_clusters!(similar(Vector{Int}, (axes(X, 2),)), U, b, X)
 
@@ -193,7 +189,6 @@ and return this vector of assignments.
 
 See also [`kas_assign_clusters`](@ref), [`kas`](@ref).
 """
-
 function kas_assign_clusters!(c, U, b, X)
     for (i, xi) in pairs(eachcol(X))
         c[i] = argmin(
@@ -210,7 +205,6 @@ Return `dk`-dimensional affine space that best fits the data points in `Xk`.
 
 See also [`kas`](@ref).
 """
-
 function kas_estimate_affinespace(Xk, dk)
     bhat = mean(eachcol(Xk))
     Uhat = svd!(Xk .- bhat; full = true).U[:, 1:dk]
