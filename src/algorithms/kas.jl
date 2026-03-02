@@ -14,7 +14,7 @@ The output of [`kas`](@ref).
 
 # Fields
 - `U::TU`: vector of affine space basis matrices `U[1],...,U[K]`
-- `b::Tb`: vector of base vectors `b[1],...,b[K]`
+- `b::Tb`: vector of bias vectors `b[1],...,b[K]`
 - `c::Tc`: vector of cluster assignments `c[1],...,c[N]`
 - `iterations::Int`: number of iterations performed
 - `totalcost::T`: final value of total cost function
@@ -41,7 +41,7 @@ end
     kas(X::AbstractMatrix{<:Real}, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
-        init = [randaffinespace(rng, size(X, 1), di) for di in d])
+        init = [(randsubspace(rng, size(X, 1), di), zeros(size(X, 1))) for di in d])
 
 Cluster the `N` data points in the `D×N` data matrix `X`
 into `K` clusters via the K-Affinespaces (KAS) algorithm
@@ -54,7 +54,7 @@ and metadata about the algorithm run.
 KAS seeks to cluster data points by their affine space
 by minimizing the following total cost
 ```math
-\\sum_{i=1}^N \\| (X[:, i]  - [U[c[i]] U[c[i]]' (X[:, i] - b[c[i]]) + b[c[i]])] \\|_2^2
+\\sum_{i=1}^N \\| X[:, i] - (U[c[i]] U[c[i]]' (X[:, i] - b[c[i]]) + b[c[i]]) \\|_2^2
 ```
 with respect to the cluster assignments `c[1],...,c[N]`, affine space basis matrices `U[1],...,U[K]`, and bias vectors `b[1],...,b[K]`.
 
@@ -63,7 +63,7 @@ with respect to the cluster assignments `c[1],...,c[N]`, affine space basis matr
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the affine space for an empty cluster)
 - `init::AbstractVector{<:Tuple{<:AbstractMatrix{<:AbstractFloat}, <:AbstractVector{<:AbstractFloat}}}
-    = [randaffinespace(rng, size(X, 1), di) for di in d]`:
+    = [(randsubspace(rng, size(X, 1), di), zeros(size(X, 1))) for di in d]`:
     vector of `K` initial pair of affine space basis matrices containing `U[1],...,U[K]`
     and bias vectors containing `b[1],...,b[K]`.
 
@@ -77,7 +77,7 @@ function kas(
     rng::AbstractRNG = default_rng(),
     init::AbstractVector{
         <:Tuple{<:AbstractMatrix{<:AbstractFloat},<:AbstractVector{<:AbstractFloat}},
-    } = [randaffinespace(rng, size(X, 1), di) for di in d],
+    } = [(randsubspace(rng, size(X, 1), di), zeros(size(X, 1))) for di in d],
 )
 
     # Unpack the initial affine space basis matrices and bias vectors
@@ -94,8 +94,8 @@ function kas(
     end
 
     # Extract sizes and check that they agree
-    K = (only ∘ unique)([length(d), length(binit)])
-    D = (only ∘ unique)([size(X, 1); size.(Uinit, 1)])
+    K = (only ∘ unique)([length(d), length(Uinit), length(binit)])
+    D = (only ∘ unique)([size(X, 1); size.(Uinit, 1); length.(binit)])
 
     # Check affine space dimensions
     for k in 1:K
@@ -111,7 +111,7 @@ function kas(
         )
         length(binit[k]) == D || throw(
             ArgumentError(
-                "Bias vector initialiation `binit[$k]` must be of length `D=$D`.",
+                "Bias vector initialization `binit[$k]` must be of length `D=$D`.",
             ),
         )
     end
@@ -130,18 +130,19 @@ function kas(
 
     # Main loop
     cprev = copy(c)
+    log_every = max(1, maxiters ÷ 100)
     iterations, converged = 0, false
     @withprogress while iterations < maxiters && !converged
         iterations += 1
 
-        # Update Affine space basis and base vectors
+        # Update affine space basis and bias vectors
         for k in 1:K
             inds = findall(==(k), c)
             if !isempty(inds)
                 U[k], b[k] = kas_estimate_affinespace(view(X, :, inds), d[k])
             else
                 @warn "Empty cluster detected at iteration $iterations - reinitializing the affine space. Consider reducing the number of clusters."
-                U[k], b[k] = randaffinespace(rng, D, d[k])
+                U[k], b[k] = randsubspace(rng, D, d[k]), zeros(D)
             end
         end
 
@@ -156,7 +157,7 @@ function kas(
         copyto!(cprev, c)
 
         # Log progress
-        if iterations % (maxiters ÷ 100) == 0
+        if iterations % log_every == 0
             @logprogress iterations / maxiters
         end
     end
@@ -172,7 +173,7 @@ function kas(
 end
 
 """
-    kas_assign_clusters(U, X)
+    kas_assign_clusters(U, b, X)
 
 Assign the `N` data points in `X` to the `K` affine spaces in (`U`, `b`)
 and return a vector of the assignments.
@@ -184,7 +185,7 @@ kas_assign_clusters(U, b, X) =
     kas_assign_clusters!(similar(Vector{Int}, (axes(X, 2),)), U, b, X)
 
 """
-    kas_assign_clusters!(c, U, X)
+    kas_assign_clusters!(c, U, b, X)
 
 Assign the `N` data points in `X` to the `K` affine spaces in (`U`, `b`),
 update the vector of assignments `c`,
@@ -212,6 +213,6 @@ See also [`kas`](@ref).
 
 function kas_estimate_affinespace(Xk, dk)
     bhat = mean(eachcol(Xk))
-    Uhat = svd(Xk - bhat * ones(size(Xk, 2))'; full = true).U[:, 1:dk]
+    Uhat = svd(Xk .- bhat; full = true).U[:, 1:dk]
     return Uhat, bhat
 end

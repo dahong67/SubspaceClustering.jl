@@ -21,6 +21,7 @@
     end
     for bias in b
         @test length(bias) == D
+        @test all(!isnan, bias)
     end
 end
 
@@ -46,6 +47,7 @@ end
     end
     for bias in b
         @test length(bias) == D
+        @test all(!isnan, bias)
     end
 end
 
@@ -55,9 +57,11 @@ end
     rng = StableRNG(2)
     D, N = 7, 30
     d = [2, 3]
-    U1, b1 = SubspaceClustering.randaffinespace(rng, D, d[1])
+    U1 = SubspaceClustering.randsubspace(rng, D, d[1])
+    b1 = zeros(D)
     X = U1 * randn(rng, d[1], N) .+ b1
-    U2, b2 = SubspaceClustering.randaffinespace(rng, D, d[2])
+    U2 = SubspaceClustering.randsubspace(rng, D, d[2])
+    b2 = zeros(D)
     result = kas(X, d; init = [(U1, b1), (U2, b2)])
     U, b, c = result.U, result.b, result.c
 
@@ -70,8 +74,10 @@ end
     rng = StableRNG(3)
     D, N = 8, 40
     d = [3, 4]
-    U1, b1 = SubspaceClustering.randaffinespace(rng, D, d[1])
-    U2, b2 = SubspaceClustering.randaffinespace(rng, D, d[2])
+    U1 = SubspaceClustering.randsubspace(rng, D, d[1])
+    b1 = zeros(D)
+    U2 = SubspaceClustering.randsubspace(rng, D, d[2])
+    b2 = zeros(D)
     X =
         hcat(U1 * randn(rng, d[1], N) .+ b1, U2 * randn(rng, d[2], N) .+ b2) .+
         0.01 * randn(rng, D, 2N)
@@ -101,7 +107,7 @@ end
     @testset "invalid affine space dimension" begin
         rng = StableRNG(5)
         X = randn(rng, 5, 80)
-        d = [0, -1]
+        d = [-1, -2]
         @test_throws ArgumentError kas(X, d)
     end
 
