@@ -113,6 +113,7 @@ function kss(
     # Main loop
     cprev = copy(c)
     iterations, converged = 0, false
+    log_every = max(1, maxiters ÷ 100)
     @withprogress while iterations < maxiters && !converged
         iterations += 1
 
@@ -138,7 +139,7 @@ function kss(
         copyto!(cprev, c)
 
         # Log progress
-        if iterations % (maxiters ÷ 100) == 0
+        if iterations % log_every == 0
             @logprogress iterations / maxiters
         end
     end
