@@ -139,11 +139,10 @@ function kss(
 
         # Log progress
         log_interval = max(1, maxiters ÷ 100)
-        
+
         if iterations % log_interval == 0
             @logprogress iterations / maxiters
         end
-
     end
 
     # Compute final counts and costs
