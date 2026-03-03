@@ -4,8 +4,9 @@
 
 """
     KASResult{
-        TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
-        Tb<:AbstractVector{<:AbstractVector{<:AbstractFloat}},
+        TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}},
+        TU<:AbstractVector{<:AbstractMatrix{TUb}},
+        Tb<:AbstractVector{<:AbstractVector{TUb}},
         Tc<:AbstractVector{<:Integer},
         T<:Real}
 
@@ -21,8 +22,9 @@ The output of [`kas`](@ref).
 - `converged::Bool`: final convergence status
 """
 struct KASResult{
-    TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
-    Tb<:AbstractVector{<:AbstractVector{<:AbstractFloat}},
+    TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}},
+    TU<:AbstractVector{<:AbstractMatrix{TUb}},
+    Tb<:AbstractVector{<:AbstractVector{TUb}},
     Tc<:AbstractVector{<:Integer},
     T<:Real,
 }
@@ -38,10 +40,10 @@ end
 # Main function
 
 """
-    kas(X::AbstractMatrix{<:Real}, d::AbstractVector{<:Integer};
+    kas(X::AbstractMatrix{<:Number}, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
-        init = [(randsubspace(rng, size(X, 1), di), zeros(size(X, 1))) for di in d])
+        init = [(randsubspace(rng, float(eltype(X)), size(X, 1), di), zeros(float(eltype(X)), size(X, 1))) for di in d])
 
 Cluster the `N` data points in the `D×N` data matrix `X`
 into `K` clusters via the **K**-**a**ffine-**s**paces (KAS) algorithm
@@ -65,22 +67,26 @@ and bias vectors `b[1],...,b[K]`.
 - `maxiters::Integer = 100`: maximum number of iterations
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the affine space for an empty cluster)
-- `init::AbstractVector{<:Tuple{<:AbstractMatrix{<:AbstractFloat}, <:AbstractVector{<:AbstractFloat}}}
-    = [(randsubspace(rng, size(X, 1), di), zeros(size(X, 1))) for di in d]`:
+- `init::AbstractVector{<:Tuple{<:AbstractMatrix{TUb},<:AbstractVector{TUb}}}
+    = [(randsubspace(rng, float(eltype(X)), size(X, 1), di), zeros(float(eltype(X)), size(X, 1))) for di in d]`:
     vector of `K` initial pair of affine space basis matrices containing `U[1],...,U[K]`
-    and bias vectors containing `b[1],...,b[K]`.
+    and bias vectors containing `b[1],...,b[K]`
+    where `TUb` is a floating point type.
 
 See also [`KASResult`](@ref).
 """
 function kas(
-    X::AbstractMatrix{<:Real},
+    X::AbstractMatrix{<:Number},
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    init::AbstractVector{
-        <:Tuple{<:AbstractMatrix{<:AbstractFloat},<:AbstractVector{<:AbstractFloat}},
-    } = [(randsubspace(rng, size(X, 1), di), zeros(size(X, 1))) for di in d],
-)
+    init::AbstractVector{<:Tuple{<:AbstractMatrix{TUb},<:AbstractVector{TUb}}} = [
+        (
+            randsubspace(rng, float(eltype(X)), size(X, 1), di),
+            zeros(float(eltype(X)), size(X, 1)),
+        ) for di in d
+    ],
+) where {TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
     # Unpack the initial affine space basis matrices and bias vectors
     Uinit = first.(init)
     binit = last.(init)
@@ -143,7 +149,8 @@ function kas(
                 U[k], b[k] = kas_estimate_affinespace(view(X, :, inds), d[k])
             else
                 @warn "Empty cluster detected at iteration $iterations - reinitializing the affine space. Consider reducing the number of clusters."
-                U[k], b[k] = randsubspace(rng, D, d[k]), zeros(D)
+                randsubspace!(rng, U[k])
+                fill!(b[k], zero(eltype(b[k])))
             end
         end
 
