@@ -94,7 +94,9 @@ end
     for T in (Float64, ComplexF64)
         U1 = SubspaceClustering.randsubspace(rng, T, D, d[1])
         U2 = SubspaceClustering.randsubspace(rng, T, D, d[2])
-        X = hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) + 0.01 * randn(rng, D, 2N)
+        X =
+            hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) +
+            0.01 * randn(rng, D, 2N)
         result = kss(X, d; Uinit = [U1, U2])
         U, c = result.U, result.c
 

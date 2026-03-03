@@ -31,7 +31,6 @@ end
     Q = SubspaceClustering.randsubspace(rng, ComplexF64, 2, 2)
     @test typeof(Q) == Matrix{ComplexF64}
     @test isapprox(Q' * Q, I, atol = 1e-10)
-
 end
 
 @testitem "randsubspace fallbacks" begin

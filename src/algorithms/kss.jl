@@ -71,9 +71,9 @@ function kss(
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    Uinit::AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}} = [
-        randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d
-    ],
+    Uinit::AbstractVector{
+        <:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}},
+    } = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d],
 )
     # Require one-based indexing
     Base.require_one_based_indexing(X, d, Uinit)
@@ -86,7 +86,7 @@ function kss(
     D = (only ∘ unique)([size(X, 1); size.(Uinit, 1)])
 
     # Check subspace dimensions
-    for k in 1:K 
+    for k in 1:K
         d[k] == size(Uinit[k], 2) || throw(
             ArgumentError(
                 "Basis matrix initialization `Uinit[$k]` must have `d[$k]=$(d[k])` columns.",
