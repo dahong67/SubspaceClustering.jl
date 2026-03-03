@@ -4,6 +4,7 @@
 
 """
     KASResult{
+        TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}},
         TU<:AbstractVector{<:AbstractMatrix{TUb}},
         Tb<:AbstractVector{<:AbstractVector{TUb}},
         Tc<:AbstractVector{<:Integer},
@@ -21,11 +22,12 @@ The output of [`kas`](@ref) where `TUb<:Union{AbstractFloat,Complex{<:AbstractFl
 - `converged::Bool`: final convergence status
 """
 struct KASResult{
+    TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}},
     TU<:AbstractVector{<:AbstractMatrix{TUb}},
     Tb<:AbstractVector{<:AbstractVector{TUb}},
     Tc<:AbstractVector{<:Integer},
     T<:Real,
-} where {TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
+}
     U::TU
     b::Tb
     c::Tc
