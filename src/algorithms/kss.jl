@@ -60,7 +60,7 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the subspace for an empty cluster)
 - `Uinit::AbstractVector{<:AbstractMatrix{T}}
-    = [randsubspace(rng, size(X, 1), di) for di in d]`:
+    = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
     (each `Uinit[k]` should be `D×d[k]` and have eltype `T`
     where `T` is a floating point type)
