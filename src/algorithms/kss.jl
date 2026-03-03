@@ -62,7 +62,8 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `Uinit::AbstractVector{<:AbstractMatrix{T}}
     = [randsubspace(rng, size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
-    (each `Uinit[k]` should be `D×d[k]`)
+    (each `Uinit[k]` should be `D×d[k]` and have eltype `T`
+    where `T` is a floating point type)
 
 See also [`KSSResult`](@ref).
 """
