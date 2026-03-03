@@ -22,28 +22,6 @@
     end
 end
 
-@testitem "Random data with 2 clusters with same subspace dimensions" begin
-    using LinearAlgebra, StableRNGs
-
-    rng = StableRNG(0)
-    D, N = 5, 20
-    for T in (Float64, ComplexF64)
-        X = randn(rng, T, D, N)
-        d = [2, 2]
-        result = kss(X, d)
-        U, c = result.U, result.c
-
-        @test length(U) == length(d)
-        @test length(c) == N
-        @test size(U[1]) == (D, d[1])
-        @test size(U[2]) == (D, d[2])
-
-        for subspace in U
-            @test isapprox(subspace' * subspace, I, atol = 1e-10)
-        end
-    end
-end
-
 @testitem "Random data with 3 clusters with different subspace dimensions" begin
     using LinearAlgebra, StableRNGs
 

@@ -124,7 +124,7 @@ function kss(
                 U[k] = kss_estimate_subspace(view(X, :, inds), d[k])
             else
                 @warn "Empty cluster detected at iteration $iterations - reinitializing the subspace. Consider reducing the number of clusters."
-                U[k] = randsubspace(rng, eltype(X), D, d[k])
+                randsubspace!(rng, U[k])
             end
         end
 

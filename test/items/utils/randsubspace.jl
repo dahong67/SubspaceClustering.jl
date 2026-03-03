@@ -3,9 +3,12 @@
 @testitem "Small 2x2 matrix" begin
     using LinearAlgebra, StableRNGs
 
-    rng = StableRNG(0)
-    Q = SubspaceClustering.randsubspace(rng, Float64, 2, 2)
-    @test isapprox(Q' * Q, I, atol = 1e-10)
+    for T in (Float64, ComplexF64)
+        rng = StableRNG(0)
+        Q = SubspaceClustering.randsubspace(rng, T, 2, 2)
+        @test Q isa Matrix{T}
+        @test isapprox(Q' * Q, I, atol = 1e-10)
+    end
 end
 
 @testitem "Rectangular (tall) matrix" begin
@@ -21,15 +24,6 @@ end
 
     rng = StableRNG(3)
     Q = SubspaceClustering.randsubspace(rng, Float64, 4, 4)
-    @test isapprox(Q' * Q, I, atol = 1e-10)
-end
-
-@testitem "Small complex matrix" begin
-    using LinearAlgebra, StableRNGs
-
-    rng = StableRNG(4)
-    Q = SubspaceClustering.randsubspace(rng, ComplexF64, 2, 2)
-    @test typeof(Q) == Matrix{ComplexF64}
     @test isapprox(Q' * Q, I, atol = 1e-10)
 end
 
