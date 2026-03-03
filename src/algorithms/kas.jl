@@ -10,7 +10,7 @@
         Tc<:AbstractVector{<:Integer},
         T<:Real}
 
-The output of [`kas`](@ref) where `TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}}`.
+The output of [`kas`](@ref).
 
 # Fields
 - `U::TU`: vector of affine space basis matrices `U[1],...,U[K]`
