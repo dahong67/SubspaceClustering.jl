@@ -3,7 +3,7 @@
 """
     randsubspace([rng=default_rng()], [T=Float64], D, d)
 
-Generate a random `d`-dimensional subspace of `ℝᴰ` (if `T<:Real`) or of `ℂᴰ` (if `T<:Complex`)
+Generate a random `d`-dimensional subspace of `ℝᴰ` (if `T<:Real`) or `ℂᴰ` (if `T<:Complex`)
 and return a `D×d` orthonormal basis matrix with elements of type `T`
 (`T` must be a floating point type).
 
@@ -26,10 +26,11 @@ randsubspace(rng::AbstractRNG, D::Integer, d::Integer) = randsubspace(rng, Float
 randsubspace(D::Integer, d::Integer) = randsubspace(default_rng(), Float64, D, d)
 
 """
-    randsubspace!([rng=default_rng()], U::AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}})
+    randsubspace!([rng=default_rng()], U::AbstractMatrix{T})
 
-Set the `D×d` matrix `U` to be the basis matrix of
-a randomly generated `d`-dimensional subspace of `ℝᴰ` or `ℂᴰ`.
+Set the `D×d` matrix `U` to be the basis matrix of a randomly generated
+`d`-dimensional subspace of `ℝᴰ` (if `T<:Real`) or `ℂᴰ` (if `T<:Complex`),
+where `T` must be a floating point type.
 
 See also [`randsubspace`](@ref)
 """
