@@ -37,7 +37,8 @@ end
     kss(X::AbstractMatrix{<:Number}, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
-        Uinit = [randsubspace(rng, size(X, 1), di) for di in d])
+        Uinit = [randsubspace(rng, size(X, 1), di) for di in d],
+        progress = false)
 
 Cluster the `N` data points in the `D×N` data matrix `X`
 into `K` clusters via the **K**-**s**ub**s**paces (KSS) algorithm
@@ -64,7 +65,7 @@ and subspace basis matrices `U[1],...,U[K]`.
     vector of `K` initial subspace basis matrices to use
     (each `Uinit[k]` should be `D×d[k]` and have eltype `T`
     where `T` is a floating point type)
-- `progress::Bool = false`: To log progress during the algorithm run
+- `progress::Bool = false`: whether to log progress during the algorithm run
 
 See also [`KSSResult`](@ref).
 """
