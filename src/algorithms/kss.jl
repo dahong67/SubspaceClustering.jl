@@ -4,7 +4,7 @@
 
 """
     KSSResult{
-        TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
+        TU<:AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}},
         Tc<:AbstractVector{<:Integer},
         T<:Real}
 
@@ -19,7 +19,7 @@ The output of [`kss`](@ref).
 - `converged::Bool`: final convergence status
 """
 struct KSSResult{
-    TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
+    TU<:AbstractVector{<:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}}},
     Tc<:AbstractVector{<:Integer},
     T<:Real,
 }
@@ -34,7 +34,7 @@ end
 # Main function
 
 """
-    kss(X::AbstractMatrix{<:Real}, d::AbstractVector{<:Integer};
+    kss(X::AbstractMatrix{<:Number}, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
         Uinit = [randsubspace(rng, size(X, 1), di) for di in d])
@@ -59,22 +59,23 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `maxiters::Integer = 100`: maximum number of iterations
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the subspace for an empty cluster)
-- `Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}}
-    = [randsubspace(rng, size(X, 1), di) for di in d]`:
+- `Uinit::AbstractVector{<:AbstractMatrix{T}}
+    = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
-    (each `Uinit[k]` should be `D×d[k]`)
+    (each `Uinit[k]` should be `D×d[k]` and have eltype `T`
+    where `T` is a floating point type)
 - `progress::Bool = false`: To log progress during the algorithm run
 
 See also [`KSSResult`](@ref).
 """
 function kss(
-    X::AbstractMatrix{<:Real},
+    X::AbstractMatrix{<:Number},
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    Uinit::AbstractVector{<:AbstractMatrix{<:AbstractFloat}} = [
-        randsubspace(rng, size(X, 1), di) for di in d
-    ],
+    Uinit::AbstractVector{
+        <:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}},
+    } = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d],
     progress::Bool = false,
 )
     # Require one-based indexing
@@ -115,6 +116,7 @@ function kss(
     # Main loop
     cprev = copy(c)
     iterations, converged = 0, false
+    log_every = max(1, maxiters ÷ 100)
     @withprogress while iterations < maxiters && !converged
         iterations += 1
 
@@ -125,7 +127,7 @@ function kss(
                 U[k] = kss_estimate_subspace(view(X, :, inds), d[k])
             else
                 @warn "Empty cluster detected at iteration $iterations - reinitializing the subspace. Consider reducing the number of clusters."
-                U[k] = randsubspace(rng, D, d[k])
+                randsubspace!(rng, U[k])
             end
         end
 
@@ -140,7 +142,7 @@ function kss(
         copyto!(cprev, c)
 
         # Log progress
-        if progress && iterations % (maxiters ÷ 100) == 0
+        if progress && iterations % log_every == 0
             @logprogress iterations / maxiters
         end
     end

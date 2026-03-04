@@ -22,7 +22,12 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "Quick start guide" => "quickstart.md",
-        "Algorithms" => ["Overview" => "algs/main.md", "K-subspaces" => "algs/kss.md"],
+        "Algorithms" => [
+            "Overview" => "algs/main.md",
+            "K-subspaces" => "algs/kss.md",
+            "K-affine-spaces" => "algs/kas.md",
+            "Thresholding-based subspace clustering" => "algs/tsc.md",
+        ],
         "API" => "api.md",
         "Developer Docs" => "devdocs.md",
     ],
