@@ -25,6 +25,7 @@ makedocs(;
         "Algorithms" => [
             "Overview" => "algs/main.md",
             "K-subspaces" => "algs/kss.md",
+            "K-affine-spaces" => "algs/kas.md",
             "Thresholding-based subspace clustering" => "algs/tsc.md",
         ],
         "API" => "api.md",
