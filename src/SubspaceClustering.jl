@@ -15,7 +15,7 @@ using SparseArrays: sparse
 using Statistics: mean
 
 # Exports
-export KASResult, kas, KSSResult, kss, TSCResult, tsc
+export KASResult, kas, KSSResult, kss, TSCResult, tsc, EKSSResult, ekss
 @compat public randsubspace
 
 # Algorithms
