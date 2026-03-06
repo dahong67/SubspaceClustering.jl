@@ -100,9 +100,9 @@ function tsc(
 
     # Compute cluster assignments via batched K-means
     @info "Running batched K-means with $kmeans_nruns runs"
-    results = @withprogress map(1:kmeans_nruns) do run
+    results = @withprogressif showprogress map(1:kmeans_nruns) do run
         result = kmeans(E, K; rng, kmeans_opts...)
-        showprogress && @logprogress run / kmeans_nruns
+        @logprogressif showprogress run / kmeans_nruns
         return result
     end
 

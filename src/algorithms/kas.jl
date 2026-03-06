@@ -142,7 +142,7 @@ function kas(
     cprev = copy(c)
     iterations, converged = 0, false
     log_every = max(1, maxiters ÷ 100)
-    @withprogress while iterations < maxiters && !converged
+    @withprogressif showprogress while iterations < maxiters && !converged
         iterations += 1
 
         # Update affine space basis matrices and bias vectors
@@ -168,8 +168,8 @@ function kas(
         copyto!(cprev, c)
 
         # Log progress
-        if showprogress && iterations % log_every == 0
-            @logprogress iterations / maxiters
+        if iterations % log_every == 0
+            @logprogressif showprogress iterations / maxiters
         end
     end
 
