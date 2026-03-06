@@ -92,7 +92,7 @@ function tsc(
 
     # Form affinity matrix
     @info "Forming affinity matrix"
-    A = tsc_affinity(X; max_nz, max_chunksize)
+    A = tsc_affinity(X; max_nz, max_chunksize, showprogress)
 
     # Compute embedding
     @info "Computing embedding"
@@ -114,7 +114,8 @@ end
 # Subroutines
 
 """
-    tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 1000)
+    tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 1000,
+                    showprogress = false)
 
 Compute the sparse TSC affinity (i.e., adjacency) matrix for the `N` data points in `X`
 formed by thresholding their pairwise absolute cosine similarities at `max_nz` neighbors
@@ -125,7 +126,12 @@ over chunks of at most `max_chunksize` points at a time.
 
 See also [`tsc`](@ref).
 """
-function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 1000)
+function tsc_affinity(
+    X;
+    max_nz = max(2, cld(size(X, 2), 4)),
+    max_chunksize = 1000,
+    showprogress = false,
+)
     # Precompute normalized data points and extract needed dims
     Y = mapslices(normalize, X; dims = 1)
     N = size(X, 2)
@@ -135,7 +141,10 @@ function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 10
     C_buf = similar(Y, N, chunksize)    # buffer for pairwise absolute cosine similarities
     s_buf = Vector{Int}(undef, N)       # buffer for sorting
     chunks = Iterators.partition(1:N, chunksize)
-    Z_nzs = @withprogress mapreduce(vcat, enumerate(chunks)) do (chunk_idx, chunk)
+    Z_nzs = @withprogressif showprogress mapreduce(
+        vcat,
+        enumerate(chunks),
+    ) do (chunk_idx, chunk)
         # Compute pairwise absolute cosine similarities for chunk using appropriate buffer
         C_chunk = length(chunk) == chunksize ? C_buf : similar(Y, N, length(chunk))
         mul!(C_chunk, Y', view(Y, :, chunk))
@@ -159,7 +168,7 @@ function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 10
         end
 
         # Update progress bar and return
-        @logprogress chunk_idx / cld(N, chunksize)
+        @logprogressif showprogress chunk_idx / cld(N, chunksize)
         return Z_nzs_chunk
     end
     Z_rows = reduce(vcat, getindex.(Z_nzs, :rows))
