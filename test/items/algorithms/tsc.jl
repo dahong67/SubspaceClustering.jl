@@ -35,7 +35,7 @@ end
 
     rng = StableRNG(4)
     X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 4) for _ in 1:3])
-    result = tsc(X, 3; rng)
+    result = tsc(X, 3; rng, showprogress = true)
 
     @test Set([findall(==(k), result.assignments) for k in 1:3]) == Set([1:4, 5:8, 9:12])
 end

@@ -37,7 +37,8 @@ end
         max_chunksize = 1000,
         rng = default_rng(),
         kmeans_nruns = 10,
-        kmeans_opts = (;))
+        kmeans_opts = (;),
+        showprogress = false)
 
 Cluster the `N` data points in the `D×N` data matrix `X` into `K` clusters
 via the **T**hresholding-based **S**ubspace **C**lustering (TSC) algorithm
@@ -57,6 +58,7 @@ via normalized spectral clustering of the graph.
 - `rng::AbstractRNG = default_rng()`: random number generator used by K-means
 - `kmeans_nruns::Integer = 10`: number of K-means runs to perform
 - `kmeans_opts = (;)`: additional options for `kmeans`
+- `showprogress::Bool = false`: whether to log progress during the algorithm run
 
 See also [`TSCResult`](@ref), [`tsc_affinity`](@ref), [`tsc_embedding`](@ref).
 """
@@ -68,6 +70,7 @@ function tsc(
     rng::AbstractRNG = default_rng(),
     kmeans_nruns::Integer = 10,
     kmeans_opts = (;),
+    showprogress::Bool = false,
 )
     # Validate arguments
     Base.require_one_based_indexing(X)
@@ -89,7 +92,7 @@ function tsc(
 
     # Form affinity matrix
     @info "Forming affinity matrix"
-    A = tsc_affinity(X; max_nz, max_chunksize)
+    A = tsc_affinity(X; max_nz, max_chunksize, showprogress)
 
     # Compute embedding
     @info "Computing embedding"
@@ -97,9 +100,9 @@ function tsc(
 
     # Compute cluster assignments via batched K-means
     @info "Running batched K-means with $kmeans_nruns runs"
-    results = @withprogress map(1:kmeans_nruns) do run
+    results = @withprogressif showprogress map(1:kmeans_nruns) do run
         result = kmeans(E, K; rng, kmeans_opts...)
-        @logprogress run / kmeans_nruns
+        @logprogressif showprogress run / kmeans_nruns
         return result
     end
 
@@ -111,7 +114,8 @@ end
 # Subroutines
 
 """
-    tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 1000)
+    tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 1000,
+                    showprogress = false)
 
 Compute the sparse TSC affinity (i.e., adjacency) matrix for the `N` data points in `X`
 formed by thresholding their pairwise absolute cosine similarities at `max_nz` neighbors
@@ -122,7 +126,12 @@ over chunks of at most `max_chunksize` points at a time.
 
 See also [`tsc`](@ref).
 """
-function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 1000)
+function tsc_affinity(
+    X;
+    max_nz = max(2, cld(size(X, 2), 4)),
+    max_chunksize = 1000,
+    showprogress = false,
+)
     # Precompute normalized data points and extract needed dims
     Y = mapslices(normalize, X; dims = 1)
     N = size(X, 2)
@@ -132,7 +141,10 @@ function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 10
     C_buf = similar(Y, N, chunksize)    # buffer for pairwise absolute cosine similarities
     s_buf = Vector{Int}(undef, N)       # buffer for sorting
     chunks = Iterators.partition(1:N, chunksize)
-    Z_nzs = @withprogress mapreduce(vcat, enumerate(chunks)) do (chunk_idx, chunk)
+    Z_nzs = @withprogressif showprogress mapreduce(
+        vcat,
+        enumerate(chunks),
+    ) do (chunk_idx, chunk)
         # Compute pairwise absolute cosine similarities for chunk using appropriate buffer
         C_chunk = length(chunk) == chunksize ? C_buf : similar(Y, N, length(chunk))
         mul!(C_chunk, Y', view(Y, :, chunk))
@@ -156,7 +168,7 @@ function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 10
         end
 
         # Update progress bar and return
-        @logprogress chunk_idx / cld(N, chunksize)
+        @logprogressif showprogress chunk_idx / cld(N, chunksize)
         return Z_nzs_chunk
     end
     Z_rows = reduce(vcat, getindex.(Z_nzs, :rows))
