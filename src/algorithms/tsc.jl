@@ -37,7 +37,8 @@ end
         max_chunksize = 1000,
         rng = default_rng(),
         kmeans_nruns = 10,
-        kmeans_opts = (;))
+        kmeans_opts = (;),
+        showprogress = false)
 
 Cluster the `N` data points in the `D×N` data matrix `X` into `K` clusters
 via the **T**hresholding-based **S**ubspace **C**lustering (TSC) algorithm
@@ -57,6 +58,7 @@ via normalized spectral clustering of the graph.
 - `rng::AbstractRNG = default_rng()`: random number generator used by K-means
 - `kmeans_nruns::Integer = 10`: number of K-means runs to perform
 - `kmeans_opts = (;)`: additional options for `kmeans`
+- `showprogress::Bool = false`: whether to log progress during the algorithm run
 
 See also [`TSCResult`](@ref), [`tsc_affinity`](@ref), [`tsc_embedding`](@ref).
 """
@@ -68,6 +70,7 @@ function tsc(
     rng::AbstractRNG = default_rng(),
     kmeans_nruns::Integer = 10,
     kmeans_opts = (;),
+    showprogress::Bool = false,
 )
     # Validate arguments
     Base.require_one_based_indexing(X)
@@ -99,7 +102,7 @@ function tsc(
     @info "Running batched K-means with $kmeans_nruns runs"
     results = @withprogress map(1:kmeans_nruns) do run
         result = kmeans(E, K; rng, kmeans_opts...)
-        @logprogress run / kmeans_nruns
+        showprogress && @logprogress run / kmeans_nruns
         return result
     end
 

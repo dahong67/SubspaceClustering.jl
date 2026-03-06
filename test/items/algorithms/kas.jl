@@ -8,7 +8,7 @@
     for T in (Float64, ComplexF64)
         X = randn(rng, T, D, N)
         d = [2, 2]
-        result = kas(X, d)
+        result = kas(X, d; showprogress = true)
         U, b, c = result.U, result.b, result.c
 
         @test length(U) == length(d)
@@ -92,7 +92,7 @@ end
         X =
             hcat(U1 * randn(rng, d[1], N) .+ b1, U2 * randn(rng, d[2], N) .+ b2) .+
             0.01 * randn(rng, D, 2N)
-        result = kas(X, d; init = [(U1, b1), (U2, b2)])
+        result = kas(X, d; init = [(U1, b1), (U2, b2)], showprogress = true)
         U, b, c = result.U, result.b, result.c
 
         # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
