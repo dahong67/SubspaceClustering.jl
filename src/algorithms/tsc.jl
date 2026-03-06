@@ -35,7 +35,7 @@ end
     tsc(X::AbstractMatrix{<:Real}; 
         K::Union{Nothing,Integer} = nothing,
         kmax::Integer = 100,
-        max_nz::Integer = 100,
+        max_nz::Integer = max(2, cld(size(X, 2), 4)),
         max_chunksize = 1000,
         rng = default_rng(),
         kmeans_nruns = 10,
@@ -56,7 +56,7 @@ via normalized spectral clustering of the graph.
 # Keyword arguments
 - `K::Union{Nothing,Integer} = nothing`: Number of clusters (subspaces)
 - `kmax::Integer = 100`: Eigen values to inspect to auto select `K`
-- `max_nz::Integer = 100`: maximum number of neighbors
+- `max_nz::Integer = max(2, cld(size(X, 2), 4))`: maximum number of neighbors
 - `max_chunksize::Integer = 1000`: chunk size used in [`tsc_affinity`](@ref)
 - `rng::AbstractRNG = default_rng()`: random number generator used by K-means
 - `kmeans_nruns::Integer = 10`: number of K-means runs to perform
@@ -68,7 +68,7 @@ function tsc(
     X::AbstractMatrix{<:Real};
     K::Union{Nothing,Integer} = nothing,
     kmax::Integer = 100,
-    max_nz::Integer = 100,
+    max_nz::Integer = max(2, cld(size(X, 2), 4)),
     max_chunksize::Integer = 1000,
     rng::AbstractRNG = default_rng(),
     kmeans_nruns::Integer = 10,
