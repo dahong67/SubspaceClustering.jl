@@ -146,7 +146,7 @@ function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 10
         C_chunk .= abs.(C_chunk)
 
         # Identify at most `max_nz` largest values to keep for each column `c` in chunk
-        q = min(max_nz, N)
+        q = min(max_nz, N-1)
         Z_nzs_chunk = map(chunk, eachcol(C_chunk)) do col, c
             # Zero out the self-loop in `c`
             c[col] = zero(eltype(c))
@@ -179,7 +179,7 @@ function tsc_affinity(X; max_nz = max(2, cld(size(X, 2), 4)), max_chunksize = 10
 end
 
 """
-    tsc_embedding(A, K)
+    tsc_embedding(A; K::Union{Nothing, Integer}=nothing, kmax::Integer=100)
 
 Compute the `K`-dimensional TSC embedding for the `N×N` affinity matrix `A`,
 returning a `K×N` matrix of embeddings.
