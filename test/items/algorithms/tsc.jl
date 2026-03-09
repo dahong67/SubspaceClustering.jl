@@ -35,7 +35,48 @@ end
 
     rng = StableRNG(4)
     X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 4) for _ in 1:3])
-    result = tsc(X, 3; rng, showprogress = true)
+    result = tsc(X, 3; rng)
 
     @test Set([findall(==(k), result.assignments) for k in 1:3]) == Set([1:4, 5:8, 9:12])
+end
+
+@testitem "showprogress flag" begin
+    using LinearAlgebra, Logging, ProgressLogging, StableRNGs, Test
+
+    # Generate data
+    rng = StableRNG(4)
+    X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 10) for _ in 1:3])
+
+    @testset "showprogress = true" begin
+        logger = TestLogger(; min_level = ProgressLogging.ProgressLevel)
+        with_logger(logger) do
+            return tsc(
+                X,
+                3;
+                showprogress = true,
+                rng = StableRNG(4),
+                kmeans_nruns = 5,
+                max_chunksize = 3,
+            )
+        end
+        progress_logs = filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs)
+        logged_progress = [log.kwargs[:progress] for log in progress_logs]
+        @test logged_progress ==
+              [nothing; 0.1:0.1:1.0; "done"; nothing; 0.2:0.2:1.0; "done"]
+    end
+
+    @testset "showprogress = false" begin
+        logger = TestLogger(; min_level = ProgressLogging.ProgressLevel)
+        with_logger(logger) do
+            return tsc(
+                X,
+                3;
+                showprogress = false,
+                rng = StableRNG(4),
+                kmeans_nruns = 5,
+                max_chunksize = 3,
+            )
+        end
+        @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
+    end
 end

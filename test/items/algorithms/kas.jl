@@ -8,7 +8,7 @@
     for T in (Float64, ComplexF64)
         X = randn(rng, T, D, N)
         d = [2, 2]
-        result = kas(X, d; showprogress = true)
+        result = kas(X, d)
         U, b, c = result.U, result.b, result.c
 
         @test length(U) == length(d)
@@ -92,7 +92,7 @@ end
         X =
             hcat(U1 * randn(rng, d[1], N) .+ b1, U2 * randn(rng, d[2], N) .+ b2) .+
             0.01 * randn(rng, D, 2N)
-        result = kas(X, d; init = [(U1, b1), (U2, b2)], showprogress = true)
+        result = kas(X, d; init = [(U1, b1), (U2, b2)])
         U, b, c = result.U, result.b, result.c
 
         # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
@@ -128,5 +128,30 @@ end
         X = randn(rng, 5, 100)
         d = [2, 3]
         @test_throws ArgumentError kas(X, d; maxiters = -1)
+    end
+end
+
+@testitem "showprogress flag" begin
+    using Logging, ProgressLogging, StableRNGs, Test
+
+    # Generate data that takes >10 iterations to converge (to exercise progress logging)
+    X = randn(StableRNG(0), 10, 400)
+    d = [1, 1]
+
+    @testset "showprogress = true" begin
+        logger = TestLogger(; min_level = ProgressLogging.ProgressLevel)
+        with_logger(logger) do
+            return kas(X, d; showprogress = true, rng = StableRNG(0), maxiters = 10)
+        end
+        logged_progress = [log.kwargs[:progress] for log in logger.logs]
+        @test logged_progress == [nothing; 0.1:0.1:1.0; "done"]
+    end
+
+    @testset "showprogress = false" begin
+        logger = TestLogger(; min_level = ProgressLogging.ProgressLevel)
+        with_logger(logger) do
+            return kas(X, d; showprogress = false, rng = StableRNG(0), maxiters = 10)
+        end
+        @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
