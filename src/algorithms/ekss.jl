@@ -4,65 +4,66 @@
 
 """
     EKSSResult{
-        TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
-        Tc<:AbstractVector{<:Integer},
-        T<:Real}
+        TA<:AbstractMatrix{<:Real},
+        TE<:AbstractMatrix{<:Real},
+        TK<:KmeansResult,
+        Tc<:AbstractVector{<:Integer}}
 
 The output of [`ekss`](@ref).
 
 # Fields
-- `U::TU`: vector of ensemble subspace basis matrices `U[1],...,U[K]`
-- `c::Tc`: vector of cluster assignments `c[1],...,c[N]`
-- `iterations::Int`: number of iterations performed
-- `totalcost::T`: final value of total cost function
-- `counts::Vector{Int}`: vector of cluster sizes `counts[1],...,counts[K]`
-- `converged::Bool`: final convergence status
+- `coassoc::TA`: `N×N` Thresholded Co-Association Matrix
+- `embedding::TE`: `K×N` EKSS Embedding Matrix
+- `kmeans_runs::Vector{TK}` : vector of outputs from batched K-means
+- `assignments::Tc` : vector of final assignments
 """
 
 struct EKSSResult{
-    TU<:AbstractVector{<:AbstractMatrix{<:AbstractFloat}},
+    TA<:AbstractMatrix{<:Real},
+    TE<:AbstractMatrix{<:Real},
+    TK<:KmeansResult,
     Tc<:AbstractVector{<:Integer},
-    T<:Real,
 }
-    U::TU
-    c::Tc
-    iterations::Int
-    totalcost::T
-    counts::Vector{Int}
-    converged::Bool
+    coassoc::TA
+    embedding::TE
+    kmeans_runs::Vector{TK}
+    assignments::Tc
 end
 
 """
     ekss(X::AbstractMatrix{<:Real}, d::Integer, K::Integer;
         Kbar::Integer = K,
+        parallel::Bool = false,
         maxiters::Integer = 100,
-        nruns::Integer = 100,
+        nruns::Integer = 50,
         kmeans_nruns::Integer = 50,
         q::Integer = 10,
         rng::AbstractRNG = default_rng())
 
 # Keyword arguments
 - `Kbar::Integer = K`: Number of candidate subspaces
+- `parallel::Bool = false`: If `true`, the ensemble base KSS runs are executed in parallel using Julia multi-threading.
 - `maxiters::Integer = 100`: Maximum number of KSS iterations
-- `nruns::Integer = 100`: Number of KSS runs/Base Clusterings
-- `kmeans_nruns::Integer = 50`: Number of K-means runs to perform
 - `q::Integer = 10`: Maximum number of neighbors or Thresholding parameter
 - `rng::AbstractRNG = default_rng()`: random number generator
-    (used when reinitializing the subspace for an empty cluster)
+- `nruns::Integer = 50`: Number of KSS runs/Base Clusterings
+- `kmeans_nruns::Integer = 50`: Number of K-means runs to perform
+- `kmeans_opts = (;)`: additional options for `kmeans`
 
 See also [`EKSSResult`](@ref).
 """
-
 function ekss(
     X::AbstractMatrix{<:Real},
     d::Integer,
     K::Integer;
     Kbar::Integer = K,
+    parallel::Bool = false,
     maxiters::Integer = 100,
-    nruns::Integer = 100,
-    kmeans_nruns::Integer = 50,
     q::Integer = 10,
     rng::AbstractRNG = default_rng(),
+    nruns::Integer = 50,
+    kmeans_nruns::Integer = 50,
+    kmeans_opts = (;),
 )
 
     N = size(X, 2)
@@ -83,47 +84,130 @@ function ekss(
 
     # Run KSS Ensemble
     runs = Vector{KSSResult}(undef, nruns)
-    for r in 1:nruns
-        Uinit_r = [randsubspace(rng, size(X, 1), d) for _ in 1:Kbar]
-        runs[r] = kss(X, dvec; maxiters=maxiters, rng=rng, Uinit=Uinit_r)
+    seeds = rand(rng, UInt, nruns)
+    if parallel
+        Threads.@threads for r in 1:nruns
+            rng_r = MersenneTwister(seeds[r])
+            Uinit_r = [randsubspace(rng_r, size(X, 1), d) for _ in 1:Kbar]
+            runs[r] = kss(X, dvec; maxiters=maxiters, rng=rng_r, Uinit=Uinit_r)
+        end
+    else
+        for r in 1:nruns
+            rng_r = MersenneTwister(seeds[r])
+            Uinit_r = [randsubspace(rng_r, size(X, 1), d) for _ in 1:Kbar]
+            runs[r] = kss(X, dvec; maxiters=maxiters, rng=rng_r, Uinit=Uinit_r)
+        end
     end
 
-    # Form Co-association matrix
     cluster_labels = [run.c for run in runs]
-    C = co_association(cluster_labels)
 
+    @info "Forming Thresholded Co-Association Matrix with top $q values"
+    A = ekss_affinity(cluster_labels; q)
 
+    @info "Computing embedding"
+    E = embedding(A, K)
 
+    # Compute cluster assignments via batched K-means
+    @info "Running batched K-means with $kmeans_nruns runs"
+    results = @withprogress map(1:kmeans_nruns) do run
+        result = kmeans(E, K; rng, kmeans_opts...)
+        @logprogress run / kmeans_nruns
+        return result
+    end
+
+    # Extract assignments from best K-means run and return TSCResult
+    assignments = argmin(result -> result.totalcost, results).assignments
+
+    return EKSSResult(A, E, results, assignments)
 end
 
-# Co-Association matrix
 
-function co_association(label_runs::AbstractVector{<:AbstractVector{<:Integer}})
+# Thresholded Co-Association matrix
+function ekss_affinity(
+    label_runs::AbstractVector{<:AbstractVector{<:Integer}};
+    q::Integer,
+    max_chunksize::Integer = 1000,
+)
+
     nruns = length(label_runs)
-    nruns > 0 || throw(ArgumentError("Need at least one run to form co-association matrix."))
+    nruns > 0 || throw(ArgumentError("Need at least one run."))
 
     N = length(label_runs[1])
-    C = spzeros(Float64, N, N)
-
-    rows = collect(1:N)
-    vals = ones(Float64, N)
+    1 <= q <= N - 1 || throw(ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N."))
 
     for labels in label_runs
-        length(labels) == N || throw(DimensionMismatch("All label vectors must have same length."))
-
-        Kbar = maximum(labels)
-        Z = sparse(rows, labels, vals, N, Kbar)
-
-        C .+= Z * Z'
+        length(labels) == N ||
+            throw(DimensionMismatch("All label vectors must have same length."))
     end
 
-    C ./= nruns
+    # Chunking
+    chunksize = min(max_chunksize, N)
+    chunks = Iterators.partition(1:N, chunksize)
 
-    return C
+    # Sorting Buffer
+    s_buf = Vector{Int}(undef, N)
+
+    # Collect Sparse Triplets
+    Z_nzs = @withprogress mapreduce(vcat, enumerate(chunks)) do (chunk_idx, chunk)
+
+    m = length(chunk)
+    C_chunk = zeros(Float64, N, m)
+
+    # Forming Co-Association Matrix 
+    for labels in label_runs
+        Kbar = maximum(labels)
+        clusters = [Int[] for _ in 1:Kbar]
+        @inbounds for i in 1:N
+            push!(clusters[labels[i]], i)
+        end
+
+        @inbounds for (local_j, j) in enumerate(chunk)
+            lbl = labels[j]
+            idx = clusters[lbl]
+            for i in idx
+                C_chunk[i, local_j] += 1
+            end
+        end
+    end
+
+    # Average 
+    C_chunk ./= nruns
+
+    # Threshold each column in this chunk by keeping top-q values
+    Z_nzs_chunk = map(zip(chunk, eachcol(C_chunk))) do (j, c)
+        
+        # Zero-ing out Diagonal Values
+        c[j] = 0.0
+
+        qj = min(q, N - 1)
+        inds = partialsortperm!(s_buf, c, 1:qj; rev=true)
+
+        return (;
+            rows = copy(inds),
+            cols = fill(j, qj),
+            vals = copy(view(c, inds)),
+        )
+    end
+
+        @logprogress chunk_idx / cld(N, chunksize)
+        return Z_nzs_chunk
+    end
+
+    # assemble sparse matrix
+    Z_rows = reduce(vcat, getindex.(Z_nzs, :rows))
+    Z_cols = reduce(vcat, getindex.(Z_nzs, :cols))
+    Z_vals = reduce(vcat, getindex.(Z_nzs, :vals))
+
+    A = sparse([Z_rows; Z_cols],
+               [Z_cols; Z_rows],
+               [Z_vals; Z_vals],
+               N, N, +)
+
+    return 0.5 .* A
 end
 
-# Embedding
 
+# Embedding
 function embedding(A, K)
     # Compute node degrees and form Laplacian matrix `L` from `A`
     D = Diagonal(vec(sum(A; dims = 2)))
@@ -141,51 +225,3 @@ function embedding(A, K)
     return E
 end
 
-# Thresholded Affinity matrix
-
-function affinity_thresh(A::SparseMatrixCSC{<:Real, <:Integer}, q::Integer)
-    Base.require_one_based_indexing(A)
-
-    Zcol = _topq_per_column(A, q)
-    Zrow = _topq_per_column(A', q)'
-
-    return 0.5 .* (Zrow .+ Zcol)
-end
-
-function _topq_per_column(A::SparseMatrixCSC{<:Real, <:Integer}, q::Integer)
-    N = size(A, 1)
-    size(A, 2) == N || throw(DimensionMismatch("`A` must be square. Got size(A)=$(size(A))."))
-    1 <= q <= N - 1 || throw(ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N."))
-
-    rows_out = Int[]
-    cols_out = Int[]
-    vals_out = Float64[]
-
-    rowinds = rowvals(A)
-    nzvals = nonzeros(A)
-
-    for j in 1:N
-        rng = nzrange(A, j)
-
-        # collect off-diagonal entries in column j
-        rows_j = Int[]
-        vals_j = Float64[]
-        for p in rng
-            i = rowinds[p]
-            i == j && continue
-            push!(rows_j, i)
-            push!(vals_j, float(nzvals[p]))
-        end
-
-        isempty(vals_j) && continue
-
-        qj = min(q, length(vals_j))
-        inds = partialsortperm(vals_j, 1:qj; rev=true)
-
-        append!(rows_out, rows_j[inds])
-        append!(cols_out, fill(j, qj))
-        append!(vals_out, vals_j[inds])
-    end
-
-    return sparse(rows_out, cols_out, vals_out, N, N)
-end
