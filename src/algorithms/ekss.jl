@@ -17,7 +17,6 @@ The output of [`ekss`](@ref).
 - `kmeans_runs::Vector{TK}` : vector of outputs from batched K-means
 - `assignments::Tc` : vector of final assignments
 """
-
 struct EKSSResult{
     TA<:AbstractMatrix{<:Real},
     TE<:AbstractMatrix{<:Real},
