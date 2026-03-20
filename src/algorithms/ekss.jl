@@ -30,27 +30,54 @@ struct EKSSResult{
     assignments::Tc
 end
 
+# Main function
+
 """
     ekss(X::AbstractMatrix{<:Real}, d::Integer, K::Integer;
         Kbar::Integer = K,
         parallel::Bool = false,
         maxiters::Integer = 100,
+        q::Union{Nothing,Integer} = nothing,
+        rng::AbstractRNG = default_rng(),
         nruns::Integer = 50,
         kmeans_nruns::Integer = 50,
-        q::Integer = 10,
-        rng::AbstractRNG = default_rng())
+        kmeans_opts = (;))
+
+Cluster the `N` data points in the `D×N` data matrix `X` using the
+**Ensemble K-Subspaces (EKSS)** algorithm.
+
+EKSS improves the robustness of subspace clustering by running multiple
+independent **K-Subspaces (KSS)** base clusterings and combining their
+results through a **co-association matrix**, followed by **thresholding**
+and **spectral clustering**.
+
+Output is a [`EKSSResult`](@ref) containing the resulting cluster assignments
+with the internally computed co-association matrix, embedding matrix, and K-means runs.
+
+The algorithm proceeds as follows:
+
+1. Run `nruns` independent KSS clusterings with `Kbar` candidate subspaces
+   of dimension `d`.
+2. Construct a co-association matrix measuring how frequently pairs of
+   points are assigned to the same cluster across runs.
+3. Threshold the co-association matrix by keeping the top `q` neighbors
+   per point.
+4. Perform spectral clustering on the thresholded co-association matrix to obtain
+   the final `K` clusters.
 
 # Keyword arguments
 - `Kbar::Integer = K`: Number of candidate subspaces
 - `parallel::Bool = false`: If `true`, the ensemble base KSS runs are executed in parallel using Julia multi-threading.
 - `maxiters::Integer = 100`: Maximum number of KSS iterations
-- `q::Integer = 10`: Maximum number of neighbors or Thresholding parameter
+- `q::Union{Nothing,Integer} = nothing`: Threshold parameter controlling the number
+  of neighbors retained per point. If `nothing`, a default is chosen automatically
+  from the number of data points.
 - `rng::AbstractRNG = default_rng()`: random number generator
 - `nruns::Integer = 50`: Number of KSS runs/Base Clusterings
 - `kmeans_nruns::Integer = 50`: Number of K-means runs to perform
 - `kmeans_opts = (;)`: additional options for `kmeans`
 
-See also [`EKSSResult`](@ref).
+See also [`EKSSResult`](@ref), [`ekss_affinity`](@ref), [`embedding`](@ref).
 """
 function ekss(
     X::AbstractMatrix{<:Real},
@@ -59,7 +86,7 @@ function ekss(
     Kbar::Integer = K,
     parallel::Bool = false,
     maxiters::Integer = 100,
-    q::Integer = 10,
+    q::Union{Nothing,Integer} = nothing,
     rng::AbstractRNG = default_rng(),
     nruns::Integer = 50,
     kmeans_nruns::Integer = 50,
@@ -67,6 +94,7 @@ function ekss(
 )
 
     N = size(X, 2)
+    q = isnothing(q) ? max(10, min(cld(N, 20), 100)) : q
 
     # Validate arguments
     Base.require_one_based_indexing(X)
@@ -102,7 +130,7 @@ function ekss(
     cluster_labels = [run.c for run in runs]
 
     @info "Forming Thresholded Co-Association Matrix with top $q values"
-    A = ekss_affinity(cluster_labels; q)
+    A = ekss_affinity(cluster_labels; q=q, N=N, nruns=nruns)
 
     @info "Computing embedding"
     E = embedding(A, K)
@@ -115,25 +143,36 @@ function ekss(
         return result
     end
 
-    # Extract assignments from best K-means run and return TSCResult
+    # Extract assignments from best K-means run and return EKSSResult
     assignments = argmin(result -> result.totalcost, results).assignments
 
     return EKSSResult(A, E, results, assignments)
 end
 
+# Subroutines
 
-# Thresholded Co-Association matrix
+"""
+    ekss_affinity(label_runs; q, N, nruns, max_chunksize=1000)
+
+Form sparse co-association matrix by computing the clustering frequency between all pairs of points
+and thresholding each column by retaining only top `q` largest entries and then symmetrizing the result
+by averaging thresholded rows and columns. 
+
+To handle datasets with a large number of points `N`, the computation is performed
+over chunks of at most `max_chunksize` points at a time.
+
+See also [`ekss`](@ref).
+"""
 function ekss_affinity(
     label_runs::AbstractVector{<:AbstractVector{<:Integer}};
     q::Integer,
+    N::Integer,
+    nruns::Integer,
     max_chunksize::Integer = 1000,
 )
-
-    nruns = length(label_runs)
-    nruns > 0 || throw(ArgumentError("Need at least one run."))
-
-    N = length(label_runs[1])
     1 <= q <= N - 1 || throw(ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N."))
+
+    length(label_runs) == nruns || throw(DimensionMismatch("Expected nruns=$nruns label runs, got $(length(label_runs))."))
 
     for labels in label_runs
         length(labels) == N ||
@@ -150,44 +189,43 @@ function ekss_affinity(
     # Collect Sparse Triplets
     Z_nzs = @withprogress mapreduce(vcat, enumerate(chunks)) do (chunk_idx, chunk)
 
-    m = length(chunk)
-    C_chunk = zeros(Float64, N, m)
+        m = length(chunk)
+        C_chunk = zeros(Float64, N, m)
 
-    # Forming Co-Association Matrix 
-    for labels in label_runs
-        Kbar = maximum(labels)
-        clusters = [Int[] for _ in 1:Kbar]
-        @inbounds for i in 1:N
-            push!(clusters[labels[i]], i)
-        end
+        # Forming Co-Association Matrix 
+        for labels in label_runs
+            Kbar = maximum(labels)
+            clusters = [Int[] for _ in 1:Kbar]
+            @inbounds for i in 1:N
+                push!(clusters[labels[i]], i)
+            end
 
-        @inbounds for (local_j, j) in enumerate(chunk)
-            lbl = labels[j]
-            idx = clusters[lbl]
-            for i in idx
-                C_chunk[i, local_j] += 1
+            @inbounds for (local_j, j) in enumerate(chunk)
+                lbl = labels[j]
+                idx = clusters[lbl]
+                for i in idx
+                    C_chunk[i, local_j] += 1
+                end
             end
         end
-    end
 
-    # Average 
-    C_chunk ./= nruns
+        # Average 
+        C_chunk ./= nruns
 
-    # Threshold each column in this chunk by keeping top-q values
-    Z_nzs_chunk = map(zip(chunk, eachcol(C_chunk))) do (j, c)
-        
-        # Zero-ing out Diagonal Values
-        c[j] = 0.0
+        # Threshold each column in this chunk by keeping top-q values
+        Z_nzs_chunk = map(zip(chunk, eachcol(C_chunk))) do (j, c)
 
-        qj = min(q, N - 1)
-        inds = partialsortperm!(s_buf, c, 1:qj; rev=true)
+            # Zero-ing out Diagonal Values
+            c[j] = 0.0
 
-        return (;
-            rows = copy(inds),
-            cols = fill(j, qj),
-            vals = copy(view(c, inds)),
-        )
-    end
+            inds = partialsortperm!(s_buf, c, 1:q; rev = true)
+
+            return (;
+                rows = copy(inds),
+                cols = fill(j, q),
+                vals = copy(view(c, inds)),
+            )
+        end
 
         @logprogress chunk_idx / cld(N, chunksize)
         return Z_nzs_chunk
@@ -207,9 +245,14 @@ function ekss_affinity(
 end
 
 
-# Embedding
+"""
+    embedding(A, K)
+
+Compute the `K`-dimensional embedding for the `N×N` Co-Association matrix `A`,
+returning a `K×N` matrix of embeddings.
+"""
 function embedding(A, K)
-    # Compute node degrees and form Laplacian matrix `L` from `A`
+    # Compute node degrees and form Laplacian matrix `L` from Co-Association Matrix `A`
     D = Diagonal(vec(sum(A; dims = 2)))
     L = Symmetric(I - (inv(sqrt(D)) * A * inv(sqrt(D))))
 
