@@ -45,7 +45,7 @@
 end
 
 @testitem "Parallel and serial modes return valid outputs" begin
-    using LinearAlgebra, StableRNGs, SparseArrays
+    using LinearAlgebra, StableRNGs
 
     rng = StableRNG(7)
 
