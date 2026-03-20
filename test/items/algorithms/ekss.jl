@@ -117,3 +117,16 @@ end
         @test all(1 .<= result_parallel.assignments .<= K)
     end
 end
+
+@testitem "Basic noiseless case" begin
+    using LinearAlgebra, StableRNGs
+
+    rng = StableRNG(5)
+
+    # Three 2D subspaces in ambient dimension 20, 4 points each
+    X = reduce(hcat, [svd(randn(rng, 20, 2)).U * randn(rng, 2, 4) for _ in 1:3])
+
+    result = ekss(X, 2, 3; rng, nruns = 10, kmeans_nruns = 20, q = 3)
+
+    @test Set([findall(==(k), result.assignments) for k in 1:3]) == Set([1:4, 5:8, 9:12])
+end
