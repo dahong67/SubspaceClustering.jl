@@ -96,28 +96,16 @@ function ekss(
 
     # Validate arguments
     Base.require_one_based_indexing(X)
-    d > 0 || throw(
-        ArgumentError("`d` must be positive. Got d=$d.")
-    )
-    K > 0 || throw(
-        ArgumentError("`K` must be positive. Got K=$K.")
-    )
-    Kbar > 0 || throw(
-        ArgumentError("`Kbar` must be positive. Got Kbar=$Kbar.")
-    )
-    maxiters > 0 || throw(
-        ArgumentError("`maxiters` must be positive. Got maxiters=$maxiters.")
-    )
-    nruns > 0 || throw(
-        ArgumentError("`nruns` must be positive. Got nruns=$nruns.")
-    )
+    d > 0 || throw(ArgumentError("`d` must be positive. Got d=$d."))
+    K > 0 || throw(ArgumentError("`K` must be positive. Got K=$K."))
+    Kbar > 0 || throw(ArgumentError("`Kbar` must be positive. Got Kbar=$Kbar."))
+    maxiters > 0 ||
+        throw(ArgumentError("`maxiters` must be positive. Got maxiters=$maxiters."))
+    nruns > 0 || throw(ArgumentError("`nruns` must be positive. Got nruns=$nruns."))
     kmeans_nruns > 0 || throw(
-        ArgumentError("`kmeans_nruns` must be positive. Got kmeans_nruns=$kmeans_nruns.")
+        ArgumentError("`kmeans_nruns` must be positive. Got kmeans_nruns=$kmeans_nruns."),
     )
-    1 <= q <= N - 1 || throw(
-        ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N.")
-    )
-    
+    1 <= q <= N - 1 || throw(ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N."))
 
     # Candidate subspace dimensions for each base KSS run
     dvec = fill(d, Kbar)
@@ -200,12 +188,10 @@ function ekss_affinity(
     nruns::Integer,
     max_chunksize::Integer = 1000,
 )
-    1 <= q <= N - 1 || throw(
-        ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N.")
-    )
+    1 <= q <= N - 1 || throw(ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N."))
 
     length(label_runs) == nruns || throw(
-        DimensionMismatch("Expected nruns=$nruns label runs, got $(length(label_runs)).")
+        DimensionMismatch("Expected nruns=$nruns label runs, got $(length(label_runs))."),
     )
 
     for labels in label_runs
@@ -222,7 +208,6 @@ function ekss_affinity(
 
     # Collect Sparse Triplets
     Z_nzs = @withprogress mapreduce(vcat, enumerate(chunks)) do (chunk_idx, chunk)
-
         m = length(chunk)
         C_chunk = zeros(Float64, N, m)
 
@@ -270,11 +255,10 @@ function ekss_affinity(
     A_cols = [Z_cols; Z_rows]
     A_vals = [Z_vals; Z_vals]
 
-    A = sparse(A_rows, A_cols,A_vals, N, N, +)
+    A = sparse(A_rows, A_cols, A_vals, N, N, +)
 
     return 0.5 .* A
 end
-
 
 """
     embedding(A, K)
@@ -298,4 +282,3 @@ function embedding(A, K)
     # Return the embeddings
     return E
 end
-

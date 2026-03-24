@@ -61,8 +61,8 @@ end
     X = reduce(hcat, [U * randn(rng, d, n_per_cluster) for U in subspaces])
 
     result_serial = ekss(
-        X, 
-        d, 
+        X,
+        d,
         K;
         rng = StableRNG(11),
         nruns = 12,
@@ -72,8 +72,8 @@ end
     )
 
     result_parallel = ekss(
-        X, 
-        d, 
+        X,
+        d,
         K;
         rng = StableRNG(11),
         nruns = 12,
