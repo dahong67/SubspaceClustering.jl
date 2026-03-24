@@ -91,19 +91,32 @@ function ekss(
     kmeans_nruns::Integer = 50,
     kmeans_opts = (;),
 )
-
     N = size(X, 2)
     q = isnothing(q) ? max(10, min(cld(N, 20), 100)) : q
 
     # Validate arguments
     Base.require_one_based_indexing(X)
-    d > 0 || throw(ArgumentError("`d` must be positive. Got d=$d."))
-    K > 0 || throw(ArgumentError("`K` must be positive. Got K=$K."))
-    Kbar > 0 || throw(ArgumentError("`Kbar` must be positive. Got Kbar=$Kbar."))
-    maxiters > 0 || throw(ArgumentError("`maxiters` must be positive. Got maxiters=$maxiters."))
-    nruns > 0 || throw(ArgumentError("`nruns` must be positive. Got nruns=$nruns."))
-    kmeans_nruns > 0 || throw(ArgumentError("`kmeans_nruns` must be positive. Got kmeans_nruns=$kmeans_nruns."))
-    1 <= q <= N - 1 || throw(ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N."))
+    d > 0 || throw(
+        ArgumentError("`d` must be positive. Got d=$d.")
+    )
+    K > 0 || throw(
+        ArgumentError("`K` must be positive. Got K=$K.")
+    )
+    Kbar > 0 || throw(
+        ArgumentError("`Kbar` must be positive. Got Kbar=$Kbar.")
+    )
+    maxiters > 0 || throw(
+        ArgumentError("`maxiters` must be positive. Got maxiters=$maxiters.")
+    )
+    nruns > 0 || throw(
+        ArgumentError("`nruns` must be positive. Got nruns=$nruns.")
+    )
+    kmeans_nruns > 0 || throw(
+        ArgumentError("`kmeans_nruns` must be positive. Got kmeans_nruns=$kmeans_nruns.")
+    )
+    1 <= q <= N - 1 || throw(
+        ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N.")
+    )
     
 
     # Candidate subspace dimensions for each base KSS run
@@ -114,22 +127,18 @@ function ekss(
     seeds = rand(rng, UInt, nruns)
     if parallel
         Threads.@threads for r in 1:nruns
-            rng_r = MersenneTwister(seeds[r])
-            Uinit_r = [randsubspace(rng_r, size(X, 1), d) for _ in 1:Kbar]
-            runs[r] = kss(X, dvec; maxiters=maxiters, rng=rng_r, Uinit=Uinit_r)
+            runs[r] = ekss_base_run(X, dvec, d, Kbar, maxiters, seeds[r])
         end
     else
         for r in 1:nruns
-            rng_r = MersenneTwister(seeds[r])
-            Uinit_r = [randsubspace(rng_r, size(X, 1), d) for _ in 1:Kbar]
-            runs[r] = kss(X, dvec; maxiters=maxiters, rng=rng_r, Uinit=Uinit_r)
+            runs[r] = ekss_base_run(X, dvec, d, Kbar, maxiters, seeds[r])
         end
     end
 
     cluster_labels = [run.c for run in runs]
 
     @info "Forming Thresholded Co-Association Matrix with top $q values"
-    A = ekss_affinity(cluster_labels; q=q, N=N, nruns=nruns)
+    A = ekss_affinity(cluster_labels; q = q, N = N, nruns = nruns)
 
     @info "Computing embedding"
     E = embedding(A, K)
@@ -151,6 +160,28 @@ end
 # Subroutines
 
 """
+    ekss_base_run(X, dvec, d, Kbar, maxiters, seed)
+
+Run a single base K-Subspaces (KSS) clustering used within the EKSS ensemble.
+
+This helper initializes a run-specific RNG using `seed`, generates `Kbar`
+random `d`-dimensional subspace initializations, and executes one KSS run
+with the provided maximum iteration limit.
+"""
+function ekss_base_run(
+    X::AbstractMatrix{<:Real},
+    dvec::AbstractVector{<:Integer},
+    d::Integer,
+    Kbar::Integer,
+    maxiters::Integer,
+    seed::UInt,
+)
+    rng_r = MersenneTwister(seed)
+    Uinit_r = [randsubspace(rng_r, size(X, 1), d) for _ in 1:Kbar]
+    return kss(X, dvec; maxiters = maxiters, rng = rng_r, Uinit = Uinit_r)
+end
+
+"""
     ekss_affinity(label_runs; q, N, nruns, max_chunksize=1000)
 
 Form sparse co-association matrix by computing the clustering frequency between all pairs of points
@@ -169,9 +200,13 @@ function ekss_affinity(
     nruns::Integer,
     max_chunksize::Integer = 1000,
 )
-    1 <= q <= N - 1 || throw(ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N."))
+    1 <= q <= N - 1 || throw(
+        ArgumentError("`q` must be in 1:(N-1). Got q=$q, N=$N.")
+    )
 
-    length(label_runs) == nruns || throw(DimensionMismatch("Expected nruns=$nruns label runs, got $(length(label_runs))."))
+    length(label_runs) == nruns || throw(
+        DimensionMismatch("Expected nruns=$nruns label runs, got $(length(label_runs)).")
+    )
 
     for labels in label_runs
         length(labels) == N ||
@@ -219,11 +254,7 @@ function ekss_affinity(
 
             inds = partialsortperm!(s_buf, c, 1:q; rev = true)
 
-            return (;
-                rows = copy(inds),
-                cols = fill(j, q),
-                vals = copy(view(c, inds)),
-            )
+            return (; rows = copy(inds), cols = fill(j, q), vals = copy(view(c, inds)))
         end
 
         @logprogress chunk_idx / cld(N, chunksize)
@@ -235,10 +266,11 @@ function ekss_affinity(
     Z_cols = reduce(vcat, getindex.(Z_nzs, :cols))
     Z_vals = reduce(vcat, getindex.(Z_nzs, :vals))
 
-    A = sparse([Z_rows; Z_cols],
-               [Z_cols; Z_rows],
-               [Z_vals; Z_vals],
-               N, N, +)
+    A_rows = [Z_rows; Z_cols]
+    A_cols = [Z_cols; Z_rows]
+    A_vals = [Z_vals; Z_vals]
+
+    A = sparse(A_rows, A_cols,A_vals, N, N, +)
 
     return 0.5 .* A
 end
