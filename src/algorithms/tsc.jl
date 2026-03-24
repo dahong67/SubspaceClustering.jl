@@ -77,7 +77,8 @@ function tsc(
     # Validate arguments
     Base.require_one_based_indexing(X)
     if K !== nothing
-        1 <= K <= size(X, 2) || throw(ArgumentError("`K` must be between 1 and N=$(size(X,2))."))
+        1 <= K <= size(X, 2) ||
+            throw(ArgumentError("`K` must be between 1 and N=$(size(X,2))."))
     end
     max_nz >= 1 || throw(
         ArgumentError("Maximum number of nonzeros must be positive. Got `max_nz=$max_nz`."),
@@ -100,7 +101,7 @@ function tsc(
 
     # Compute embedding
     @info "Computing embedding"
-    E, Kfinal = tsc_embedding(A; K=K, kmax=kmax)
+    E, Kfinal = tsc_embedding(A; K = K, kmax = kmax)
 
     # Compute cluster assignments via batched K-means
     @info "Running batched K-means with $kmeans_nruns runs (K=$Kfinal)"
@@ -184,7 +185,7 @@ end
 Compute the `K`-dimensional TSC embedding for the `N×N` affinity matrix `A`,
 returning a `K×N` matrix of embeddings.
 """
-function tsc_embedding(A; K::Union{Nothing, Integer}=nothing, kmax::Integer=100)
+function tsc_embedding(A; K::Union{Nothing,Integer} = nothing, kmax::Integer = 100)
     N = size(A, 1)
 
     # Compute node degrees and form Laplacian matrix `L` from `A`
@@ -195,32 +196,32 @@ function tsc_embedding(A; K::Union{Nothing, Integer}=nothing, kmax::Integer=100)
     if K === nothing
         nev = min(kmax, N - 1)
 
-        decomp, history = partialschur(L; nev=nev, which=:SR)
-        history.converged || @warn "Iterative algorithm for eigenvectors did not converge - results may be inaccurate."
+        decomp, history = partialschur(L; nev = nev, which = :SR)
+        history.converged ||
+            @warn "Iterative algorithm for eigenvectors did not converge - results may be inaccurate."
 
         λ, V = partialeigen(decomp)
         K_eigen = argmax(diff(λ))
 
-        
         Vk = @view V[:, 1:K_eigen]
 
         # Permute and normalize to obtain embeddings
         E = permutedims(Vk)
         @inbounds for i in axes(E, 1)
-            normalize!(@view E[i,:])
+            normalize!(@view E[i, :])
         end
 
         return E, K_eigen
     else
         Kint = Int(K)
-        decomp, history = partialschur(L; nev=Kint, which=:SR)
-        history.converged || @warn "Iterative algorithm for eigenvectors did not converge - results may be inaccurate."
+        decomp, history = partialschur(L; nev = Kint, which = :SR)
+        history.converged ||
+            @warn "Iterative algorithm for eigenvectors did not converge - results may be inaccurate."
 
         E = permutedims(decomp.Q)
         @inbounds for i in axes(E, 1)
-            normalize!(@view E[i,:])
+            normalize!(@view E[i, :])
         end
         return E, Kint
     end
 end
-
