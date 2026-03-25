@@ -18,12 +18,13 @@ using Statistics: mean
 export KASResult, kas, KSSResult, kss, TSCResult, tsc
 @compat public randsubspace
 
+# Utility functions/macros
+include("utils/randsubspace.jl")
+include("utils/progresslogging.jl")
+
 # Algorithms
 include("algorithms/kss.jl")
 include("algorithms/kas.jl")
 include("algorithms/tsc.jl")
-
-# Utility functions
-include("utils/randsubspace.jl")
 
 end

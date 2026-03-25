@@ -114,3 +114,28 @@ end
         @test_throws ArgumentError kss(X, d; maxiters = -1)
     end
 end
+
+@testitem "showprogress flag" begin
+    using Logging, ProgressLogging, StableRNGs, Test
+
+    # Generate data that takes >10 iterations to converge (to exercise progress logging)
+    X = randn(StableRNG(0), 10, 400)
+    d = [1, 1]
+
+    @testset "showprogress = true" begin
+        logger = TestLogger(; min_level = ProgressLogging.ProgressLevel)
+        with_logger(logger) do
+            return kss(X, d; showprogress = true, rng = StableRNG(0), maxiters = 10)
+        end
+        logged_progress = [log.kwargs[:progress] for log in logger.logs]
+        @test logged_progress == [nothing; 0.1:0.1:1.0; "done"]
+    end
+
+    @testset "showprogress = false" begin
+        logger = TestLogger(; min_level = ProgressLogging.ProgressLevel)
+        with_logger(logger) do
+            return kss(X, d; showprogress = false, rng = StableRNG(0), maxiters = 10)
+        end
+        @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
+    end
+end

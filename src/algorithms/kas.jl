@@ -43,7 +43,8 @@ end
     kas(X::AbstractMatrix{<:Number}, d::AbstractVector{<:Integer};
         maxiters = 100,
         rng = default_rng(),
-        init = [(randsubspace(rng, float(eltype(X)), size(X, 1), di), zeros(float(eltype(X)), size(X, 1))) for di in d])
+        init = [(randsubspace(rng, float(eltype(X)), size(X, 1), di), zeros(float(eltype(X)), size(X, 1))) for di in d],
+        showprogress = false)
 
 Cluster the `N` data points in the `D×N` data matrix `X`
 into `K` clusters via the **K**-**a**ffine-**s**paces (KAS) algorithm
@@ -72,6 +73,7 @@ and bias vectors `b[1],...,b[K]`.
     vector of `K` initial pair of affine space basis matrices containing `U[1],...,U[K]`
     and bias vectors containing `b[1],...,b[K]`
     where `TUb` is a floating point type.
+- `showprogress::Bool = false`: whether to log progress during the algorithm run
 
 See also [`KASResult`](@ref).
 """
@@ -86,6 +88,7 @@ function kas(
             zeros(float(eltype(X)), size(X, 1)),
         ) for di in d
     ],
+    showprogress::Bool = false,
 ) where {TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
     # Unpack the initial affine space basis matrices and bias vectors
     Uinit = first.(init)
@@ -139,7 +142,7 @@ function kas(
     cprev = copy(c)
     iterations, converged = 0, false
     log_every = max(1, maxiters ÷ 100)
-    @withprogress while iterations < maxiters && !converged
+    @withprogressif showprogress while iterations < maxiters && !converged
         iterations += 1
 
         # Update affine space basis matrices and bias vectors
@@ -166,7 +169,7 @@ function kas(
 
         # Log progress
         if iterations % log_every == 0
-            @logprogress iterations / maxiters
+            @logprogressif showprogress iterations / maxiters
         end
     end
 
