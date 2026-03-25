@@ -80,3 +80,14 @@ end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
+
+@testitem "Automatic K Estimation in noiseless case" begin
+    using LinearAlgebra, StableRNGs
+
+    rng = StableRNG(4)
+    X = reduce(hcat, [svd(randn(rng, 100, 4)).U * randn(rng, 4, 300) for _ in 1:3])
+    result = tsc(X; rng = rng)
+
+    @test size(result.embedding, 1) == 3
+    @test Set([findall(==(k), result.assignments) for k in 1:3]) == Set([1:300, 301:600, 601:900])
+end

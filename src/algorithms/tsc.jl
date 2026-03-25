@@ -109,7 +109,7 @@ function tsc(
     # Compute cluster assignments via batched K-means
     @info "Running batched K-means with $kmeans_nruns runs"
     results = @withprogressif showprogress map(1:kmeans_nruns) do run
-        result = kmeans(E, K; rng, kmeans_opts...)
+        result = kmeans(E, Kfinal; rng, kmeans_opts...)
         @logprogressif showprogress run / kmeans_nruns
         return result
     end
@@ -159,7 +159,7 @@ function tsc_affinity(
         C_chunk .= abs.(C_chunk)
 
         # Identify at most `max_nz` largest values to keep for each column `c` in chunk
-        q = min(max_nz, N-1)
+        q = min(max_nz, N - 1)
         Z_nzs_chunk = map(chunk, eachcol(C_chunk)) do col, c
             # Zero out the self-loop in `c`
             c[col] = zero(eltype(c))
