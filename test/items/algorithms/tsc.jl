@@ -51,8 +51,8 @@ end
         logger = TestLogger(; min_level = ProgressLogging.ProgressLevel)
         with_logger(logger) do
             return tsc(
-                X,
-                3;
+                X;
+                K = 3,
                 showprogress = true,
                 rng = StableRNG(4),
                 kmeans_nruns = 5,
@@ -69,8 +69,8 @@ end
         logger = TestLogger(; min_level = ProgressLogging.ProgressLevel)
         with_logger(logger) do
             return tsc(
-                X,
-                3;
+                X;
+                K = 3,
                 showprogress = false,
                 rng = StableRNG(4),
                 kmeans_nruns = 5,
