@@ -11,11 +11,12 @@ a set of linear subspaces.
 ```
 The bias vector is computed as the mean of the cluster:
 ```math
-\boldsymbol{\mu}_k = \frac{1}{N_k} \sum_{n=1}^{N_k} y_n^{(k)}
+\boldsymbol{\mu}_k = \frac{1}{N_k} \sum_{n=1}^{N_k} y_n^{(k)} \in \mathbb{R}^{L}; \quad y_n^{(k)} \text{is the n–th data point in cluster\,} k.
 ```
+
 The basis vectors for each affine space are formed by the number of left singular vectors specified by the dimensions initially chosen for each cluster.
 ```math
-\mathbf{U}_k^{\mathrm{dim}_k} = \hat{\mathbf{U}}[:,\, 1:\mathrm{dim}_k] \quad \text{where} \quad \mathcal{Y}_k - \mathbf{\mu}_k \mathbf{1}_{N_k}^\top = \hat{\mathbf{U}} \hat{\mathbf{\Sigma}} \hat{\mathbf{V}}^T \text{ is an SVD,} \quad \text{for } k = 1, \ldots, K
+\mathbf{U}_k^{\mathrm{dim}_k} = \hat{\mathbf{U}}[:,\, 1:\mathrm{dim}_k] \quad \text{where} \quad \mathcal{Y}_k - \boldsymbol{\mu}_k \mathbf{1}_{N_k}^\top = \hat{\mathbf{U}} \hat{\mathbf{\Sigma}} \hat{\mathbf{V}}^T \text{ is an SVD,} \quad \text{for } k = 1, \ldots, K
 ```
 Where ``K`` is the number of clusters, ``\mathcal{Y}_k \in \mathbb{R}^{L \times N_k}`` is the data matrix for cluster ``k``, ``N_k`` is the number of data points in ``k``, and ``dim_k`` is the respective affine space dimension for that cluster.  
 
@@ -196,6 +197,8 @@ end
 ### KAS with custom initialization coming from clusters
 
 ```@repl
+import Random                                   # hide
+Random.seed!(3)                                 # hide
 using LinearAlgebra, SubspaceClustering         # hide
 
 D= 100;             # Feature Dimension
@@ -216,7 +219,7 @@ X2 = Utrue2*A2 .+ μ2                            # hide
 
 X = [X1 X2] + 0.01*randn(D,N1 + N2);
 
-c_init = vcat(fill(1,N1), fill(2,N2));          # hide
+c_init = vcat(fill(1,N1), fill(2,N2));          # Initial cluster assignments
 inds1 = findall(==(1), c_init);
 inds2 = findall(==(2), c_init);
 
@@ -229,7 +232,7 @@ U = result.U
 b = result.b
 c = result.c
 
-counts = [count(==(1), c), count(==(2), c), count(==(3), c)]
+counts = [count(==(1), c), count(==(2), c)]
 
 for k in 1:length(d)
     println("Number of data points in cluster with affine space dimension $(d[k]): ", counts[k])
