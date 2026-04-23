@@ -5,17 +5,18 @@ module SubspaceClustering
 
 # Imports
 using ArnoldiMethod: partialschur
+using Base.Threads
 using Clustering: KmeansResult, kmeans
 using Compat: Compat, @compat
 using LinearAlgebra: Diagonal, I, Symmetric, mul!, normalize, svd!
 using Logging: @info, @warn
 using ProgressLogging: @logprogress, @withprogress
-using Random: AbstractRNG, default_rng, randn!
+using Random: AbstractRNG, default_rng, randn!, MersenneTwister
 using SparseArrays: sparse
 using Statistics: mean
 
 # Exports
-export KASResult, kas, KSSResult, kss, TSCResult, tsc
+export KASResult, kas, KSSResult, kss, TSCResult, tsc, EKSSResult, ekss
 @compat public randsubspace
 
 # Utility functions/macros
@@ -26,5 +27,6 @@ include("utils/progresslogging.jl")
 include("algorithms/kss.jl")
 include("algorithms/kas.jl")
 include("algorithms/tsc.jl")
+include("algorithms/ekss.jl")
 
 end
