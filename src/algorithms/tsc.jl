@@ -32,8 +32,10 @@ end
 # Main function
 
 """
-    tsc(X::AbstractMatrix{<:Real}, K::Integer;
-        max_nz = max(4, cld(size(X, 2), max(1, K))),
+    tsc(X::AbstractMatrix{<:Real}; 
+        K::Union{Nothing,Integer} = nothing,
+        kmax::Integer = 100,
+        max_nz::Integer = max(2, cld(size(X, 2), 4)),
         max_chunksize = 1000,
         rng = default_rng(),
         kmeans_nruns = 10,
@@ -53,7 +55,9 @@ at `max_nz` neighbors then symmetrizing. Cluster assignments are then obtained
 via normalized spectral clustering of the graph.
 
 # Keyword arguments
-- `max_nz::Integer = max(4, cld(size(X, 2), max(1, K)))`: maximum number of neighbors
+- `K::Union{Nothing,Integer} = nothing`: Number of clusters (subspaces)
+- `kmax::Integer = 100`: Eigen values to inspect to auto select `K`
+- `max_nz::Integer = max(2, cld(size(X, 2), 4))`: maximum number of neighbors
 - `max_chunksize::Integer = 1000`: chunk size used in [`tsc_affinity`](@ref)
 - `rng::AbstractRNG = default_rng()`: random number generator used by K-means
 - `kmeans_nruns::Integer = 10`: number of K-means runs to perform
@@ -63,9 +67,10 @@ via normalized spectral clustering of the graph.
 See also [`TSCResult`](@ref), [`tsc_affinity`](@ref), [`tsc_embedding`](@ref).
 """
 function tsc(
-    X::AbstractMatrix{<:Real},
-    K::Integer;
-    max_nz::Integer = max(4, cld(size(X, 2), max(1, K))),
+    X::AbstractMatrix{<:Real};
+    K::Union{Nothing,Integer} = nothing,
+    kmax::Integer = 100,
+    max_nz::Integer = max(2, cld(size(X, 2), 4)),
     max_chunksize::Integer = 1000,
     rng::AbstractRNG = default_rng(),
     kmeans_nruns::Integer = 10,
@@ -74,8 +79,10 @@ function tsc(
 )
     # Validate arguments
     Base.require_one_based_indexing(X)
-    1 <= K <= size(X, 2) ||
-        throw(ArgumentError("`K` must be between 1 and `N=$(size(X,2))`."))
+    if K !== nothing
+        1 <= K <= size(X, 2) ||
+            throw(ArgumentError("`K` must be between 1 and N=$(size(X,2))."))
+    end
     max_nz >= 1 || throw(
         ArgumentError("Maximum number of nonzeros must be positive. Got `max_nz=$max_nz`."),
     )
@@ -89,6 +96,7 @@ function tsc(
             "Number of K-means runs must be positive. Got `kmeans_nruns=$kmeans_nruns`.",
         ),
     )
+    kmax >= 2 || throw(ArgumentError("`kmax` must be at least 2 (got $kmax)."))
 
     # Form affinity matrix
     @info "Forming affinity matrix"
@@ -96,12 +104,12 @@ function tsc(
 
     # Compute embedding
     @info "Computing embedding"
-    E = tsc_embedding(A, K)
+    E, Kfinal = tsc_embedding(A; K = K, kmax = kmax)
 
     # Compute cluster assignments via batched K-means
     @info "Running batched K-means with $kmeans_nruns runs"
     results = @withprogressif showprogress map(1:kmeans_nruns) do run
-        result = kmeans(E, K; rng, kmeans_opts...)
+        result = kmeans(E, Kfinal; rng, kmeans_opts...)
         @logprogressif showprogress run / kmeans_nruns
         return result
     end
@@ -151,7 +159,7 @@ function tsc_affinity(
         C_chunk .= abs.(C_chunk)
 
         # Identify at most `max_nz` largest values to keep for each column `c` in chunk
-        q = min(max_nz, N)
+        q = min(max_nz, N - 1)
         Z_nzs_chunk = map(chunk, eachcol(C_chunk)) do col, c
             # Zero out the self-loop in `c`
             c[col] = zero(eltype(c))
@@ -184,24 +192,48 @@ function tsc_affinity(
 end
 
 """
-    tsc_embedding(A, K)
+    tsc_embedding(A; K::Union{Nothing, Integer}=nothing, kmax::Integer=100)
 
 Compute the `K`-dimensional TSC embedding for the `N×N` affinity matrix `A`,
 returning a `K×N` matrix of embeddings.
 """
-function tsc_embedding(A, K)
+function tsc_embedding(A; K::Union{Nothing,Integer} = nothing, kmax::Integer = 100)
+    N = size(A, 1)
+
     # Compute node degrees and form Laplacian matrix `L` from `A`
     D = Diagonal(vec(sum(A; dims = 2)))
     L = Symmetric(I - (inv(sqrt(D)) * A * inv(sqrt(D))))
 
-    # Compute eigenvectors corresponding to `K` smallest eigenvalues
-    decomp, history = partialschur(L; nev = K, which = :SR)
-    history.converged ||
-        @warn "Iterative algorithm for eigenvectors did not converge - results may be inaccurate."
+    # Choose `K` via eigengap heuristic or user specified
+    if K === nothing
+        nev = min(kmax, N - 1)
 
-    # Permute and normalize to obtain embeddings
-    E = mapslices(normalize, permutedims(decomp.Q); dims = 1)
+        decomp, history = partialschur(L; nev = nev, which = :SR)
+        history.converged ||
+            @warn "Iterative algorithm for eigenvectors did not converge - results may be inaccurate."
 
-    # Return the embeddings
-    return E
+        λ, V = partialeigen(decomp)
+        K_eigen = argmax(diff(λ))
+
+        Vk = @view V[:, 1:K_eigen]
+
+        # Permute and normalize to obtain embeddings
+        E = permutedims(Vk)
+        @inbounds for i in axes(E, 1)
+            normalize!(@view E[i, :])
+        end
+
+        return E, K_eigen
+    else
+        Kint = Int(K)
+        decomp, history = partialschur(L; nev = Kint, which = :SR)
+        history.converged ||
+            @warn "Iterative algorithm for eigenvectors did not converge - results may be inaccurate."
+
+        E = permutedims(decomp.Q)
+        @inbounds for i in axes(E, 1)
+            normalize!(@view E[i, :])
+        end
+        return E, Kint
+    end
 end
