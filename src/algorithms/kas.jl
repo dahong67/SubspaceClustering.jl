@@ -134,7 +134,7 @@ function kas(
 
     # Initialize model parameters
     U = map(Uk -> float.(Uk), Uinit)
-    b = map(Uk -> float.(bk), binit)
+    b = map(bk -> float.(bk), binit)
     c = kas_assign_clusters(U, b, X)
 
     # Main loop

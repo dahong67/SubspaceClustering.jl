@@ -74,9 +74,9 @@ function kss(
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    Uinit::AbstractVector{
-        <:AbstractMatrix{<:Number},
-    } = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d],
+    Uinit::AbstractVector{<:AbstractMatrix{<:Number}} = [
+        randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d
+    ],
     showprogress::Bool = false,
 )
     # Require one-based indexing

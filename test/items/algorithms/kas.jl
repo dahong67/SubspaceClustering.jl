@@ -97,7 +97,7 @@ end
 
         # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
         @test all(c[1:N] .== 1)
-        @test all(c[N+1:end] .== 2)
+        @test all(c[(N+1):end] .== 2)
 
         # Confirming the clusters are not empty
         for k in 1:length(d)
