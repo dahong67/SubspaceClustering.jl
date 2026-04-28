@@ -63,8 +63,8 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `Uinit::AbstractVector{<:AbstractMatrix{T}}
     = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
-    (each `Uinit[k]` should be `D×d[k]` and have eltype `T`
-    where `T` is a floating point type)
+    (each `Uinit[k]` should be `D×d[k]`; numeric inputs are converted to
+    floating point internally)
 - `showprogress::Bool = false`: whether to log progress during the algorithm run
 
 See also [`KSSResult`](@ref).
@@ -75,7 +75,7 @@ function kss(
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
     Uinit::AbstractVector{
-        <:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}},
+        <:AbstractMatrix{<:Number},
     } = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d],
     showprogress::Bool = false,
 )
@@ -111,7 +111,7 @@ function kss(
     )
 
     # Initialize model parameters
-    U = deepcopy(Uinit)
+    U = map(Uk -> float.(Uk), Uinit)
     c = kss_assign_clusters(U, X)
 
     # Main loop

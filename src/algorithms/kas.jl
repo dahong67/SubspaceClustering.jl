@@ -72,7 +72,6 @@ and bias vectors `b[1],...,b[K]`.
     = [(randsubspace(rng, float(eltype(X)), size(X, 1), di), zeros(float(eltype(X)), size(X, 1))) for di in d]`:
     vector of `K` initial pair of affine space basis matrices containing `U[1],...,U[K]`
     and bias vectors containing `b[1],...,b[K]`
-    where `TUb` is a floating point type.
 - `showprogress::Bool = false`: whether to log progress during the algorithm run
 
 See also [`KASResult`](@ref).
@@ -82,14 +81,14 @@ function kas(
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    init::AbstractVector{<:Tuple{<:AbstractMatrix{TUb},<:AbstractVector{TUb}}} = [
+    init::AbstractVector{<:Tuple{<:AbstractMatrix{<:Number},<:AbstractVector{<:Number}}} = [
         (
             randsubspace(rng, float(eltype(X)), size(X, 1), di),
             zeros(float(eltype(X)), size(X, 1)),
         ) for di in d
     ],
     showprogress::Bool = false,
-) where {TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
+)
     # Unpack the initial affine space basis matrices and bias vectors
     Uinit = first.(init)
     binit = last.(init)
@@ -134,8 +133,8 @@ function kas(
     )
 
     # Initialize model parameters
-    U = deepcopy(Uinit)
-    b = deepcopy(binit)
+    U = map(Uk -> float.(Uk), Uinit)
+    b = map(Uk -> float.(bk), binit)
     c = kas_assign_clusters(U, b, X)
 
     # Main loop
