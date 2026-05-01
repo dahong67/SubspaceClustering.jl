@@ -139,3 +139,22 @@ end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
+
+@testitem "Integer Uinit is converted to floating point" begin
+    using LinearAlgebra, StableRNGs
+
+    rng = StableRNG(7)
+    D, N = 5, 20
+    X = randn(rng, D, N)
+    d=[2, 3]
+
+    Uinit = [rand(rng, 1:5, D, d[1]), rand(rng, 1:5, D, d[2])]
+
+    @test eltype(Uinit[1]) <: Integer
+    @test eltype(Uinit[2]) <: Integer
+
+    result = kss(X, d; Uinit = Uinit)
+
+    @test eltype(result.U[1]) <: AbstractFloat
+    @test eltype(result.U[2]) <: AbstractFloat
+end

@@ -155,3 +155,31 @@ end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
+
+@testitem "Integer init is converted to floating point" begin
+    using LinearAlgebra, StableRNGs
+
+    rng = StableRNG(7)
+    D, N = 5, 20
+    X = randn(rng, D, N)
+    d = [2, 3]
+
+    U1 = rand(rng, 1:5, D, d[1])
+    b1 = rand(rng, 1:5, D)
+    U2 = rand(rng, 1:5, D, d[2])
+    b2 = rand(rng, 1:5, D)
+
+    init = [(U1, b1), (U2, b2)]
+
+    @test eltype(U1) <: Integer
+    @test eltype(b1) <: Integer
+    @test eltype(U2) <: Integer
+    @test eltype(b2) <: Integer
+
+    result = kas(X, d, init = init)
+
+    @test eltype(result.U[1]) <: AbstractFloat
+    @test eltype(result.b[1]) <: AbstractFloat
+    @test eltype(result.U[2]) <: AbstractFloat
+    @test eltype(result.b[2]) <: AbstractFloat
+end
