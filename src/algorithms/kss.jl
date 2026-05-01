@@ -60,7 +60,7 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `maxiters::Integer = 100`: maximum number of iterations
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the subspace for an empty cluster)
-- `Uinit::AbstractVector{<:AbstractMatrix{T}}
+- `Uinit::AbstractVector{<:AbstractMatrix{<:Number}}
     = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
     (each `Uinit[k]` should be `D×d[k]`; numeric inputs are converted to
