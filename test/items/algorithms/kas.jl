@@ -171,10 +171,7 @@ end
 
     init = [(U1, b1), (U2, b2)]
 
-    @test eltype(U1) <: Integer
-    @test eltype(b1) <: Integer
-    @test eltype(U2) <: Integer
-    @test eltype(b2) <: Integer
+    @test all(eltype(Uk) <: Integer && eltype(bk) <: Integer for (Uk, bk) in init)
 
     result = kas(X, d, init = init)
 
