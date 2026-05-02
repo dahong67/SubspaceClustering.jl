@@ -173,7 +173,7 @@ end
 
     @test all(eltype(Uk) <: Integer && eltype(bk) <: Integer for (Uk, bk) in init)
 
-    result = kas(X, d, init = init)
+    result = kas(X, d; init = init)
 
     @test eltype(result.U[1]) <: AbstractFloat
     @test eltype(result.b[1]) <: AbstractFloat
