@@ -146,7 +146,7 @@ end
     rng = StableRNG(7)
     D, N = 5, 20
     X = randn(rng, D, N)
-    d= [2, 3]
+    d = [2, 3]
 
     Uinit = [rand(rng, 1:5, D, d[1]), rand(rng, 1:5, D, d[2])]
 
