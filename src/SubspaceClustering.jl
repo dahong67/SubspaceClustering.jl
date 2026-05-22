@@ -13,6 +13,7 @@ using ProgressLogging: @logprogress, @withprogress
 using Random: AbstractRNG, default_rng, randn!
 using SparseArrays: sparse
 using Statistics: mean
+import Base: show
 
 # Exports
 export KASResult, kas, KSSResult, kss, TSCResult, tsc
