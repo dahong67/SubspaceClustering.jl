@@ -32,7 +32,7 @@ struct KSSResult{
 end
 
 function show(io::IO, ::MIME"text/plain", result::KSSResult)
-    println(io, "KSSResult ($(length(result.counts)) clusters, $(length(result.c)) assignments)")
+    println(io, " KSSResult ($(length(result.counts)) clusters, $(length(result.c)) cluster assignments)")
     println(io)
 
     assignments_preview = 
@@ -40,15 +40,15 @@ function show(io::IO, ::MIME"text/plain", result::KSSResult)
         string("[", join(result.c[1:10], ","), ", ...]") :
         string(result.c)
     
-    println(io, " assignments: ", assignments_preview)
-    println(io, " counts: ", result.counts)
-    println(io, " iterations: ", result.iterations)
-    println(io, " converged: ", result.converged)
-
+    println(io, " c (assignments):  ", assignments_preview)
     println(io)
     println(io, " Additional Fields:")
-    println(io, " U         ::", typeof(result.U))
-    println(io, " totalcost ::", typeof(result.totalcost))
+    println(io)
+    println(io, " counts        :   ", result.counts)
+    println(io, " iterations    :   ", result.iterations)
+    println(io, " converged     :   ", result.converged)
+    println(io, " U             ::  ", typeof(result.U))
+    println(io, " totalcost     ::  ", typeof(result.totalcost))
 end
 
 # Main function

@@ -37,6 +37,27 @@ struct KASResult{
     converged::Bool
 end
 
+function show(io::IO, ::MIME"text/plain", result::KASResult)
+    println(io, " KASResult ($(length(result.counts)) clusters, $(length(result.c)) cluster assignments)")
+    println(io)
+
+    assignments_preview = 
+        length(result.c) > 10 ?
+        string("[", join(result.c[1:10], ","), ", ...]") :
+        string(result.c)
+    
+    println(io, " c (assignments):  ", assignments_preview)
+    println(io)
+    println(io, " Additional Fields: ")
+    println(io)
+    println(io, " counts        :   ", result.counts)
+    println(io, " iterations    :   ", result.iterations)
+    println(io, " converged     :   ", result.converged)
+    println(io, " U             ::  ", typeof(result.U))
+    println(io, " b             ::  ", typeof(result.b))
+    println(io, " totalcost     ::  ", typeof(result.totalcost))
+end
+
 # Main function
 
 """
