@@ -32,14 +32,17 @@ struct KSSResult{
 end
 
 function show(io::IO, ::MIME"text/plain", result::KSSResult)
-    println(io, " KSSResult ($(length(result.counts)) clusters, $(length(result.assignments)) cluster assignments)")
+    println(
+        io,
+        " KSSResult ($(length(result.counts)) clusters, $(length(result.assignments)) cluster assignments)",
+    )
     println(io)
 
-    assignments_preview = 
+    assignments_preview =
         length(result.assignments) > 10 ?
         string("[", join(result.assignments[1:10], ","), ", ...]") :
         string(result.assignments)
-    
+
     println(io, " assignments       :   ", assignments_preview)
     println(io)
     println(io, " Additional Fields:")
@@ -170,7 +173,9 @@ function kss(
 
     # Compute final counts and costs
     counts = [count(==(k), assignments) for k in 1:K]
-    costs = [sum(abs2, xi) - sum(abs2, U[assignments[i]]' * xi) for (i, xi) in pairs(eachcol(X))]
+    costs = [
+        sum(abs2, xi) - sum(abs2, U[assignments[i]]' * xi) for (i, xi) in pairs(eachcol(X))
+    ]
 
     return KSSResult(U, assignments, iterations, sum(costs), counts, converged)
 end
