@@ -139,3 +139,31 @@ end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
+
+@testitem "KSSResult show method" begin
+    using StableRNGs
+
+    X = randn(StableRNG(7), 5, 40)
+    result = kss(X, [1, 1]; rng = StableRNG(7))
+
+    output = sprint((io, x) -> show(io, "text/plain", x), result)
+
+    assignments_preview = 
+        length(result.assignments) > 10 ?
+        string("[", join(result.assignments[1:10], ","), ", ...]") :
+        string(result.assignments)
+
+    expected_string = string(
+        
+        " KSSResult ($(length(result.counts)) clusters, $(length(result.assignments)) cluster assignments)\n\n",
+        " assignments       :   $(assignments_preview)\n\n",
+        " Additional Fields: \n\n",
+        " counts            :   $(result.counts)\n",
+        " iterations        :   $(result.iterations)\n",
+        " converged         :   $(result.converged)\n",
+        " U                 ::  $(typeof(result.U))\n",
+        " totalcost         ::  $(typeof(result.totalcost))\n",
+    )
+
+    @test output == expected_string
+end
