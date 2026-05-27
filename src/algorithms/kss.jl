@@ -45,7 +45,7 @@ function show(io::IO, ::MIME"text/plain", result::KSSResult)
 
     println(io, " assignments       :   ", assignments_preview)
     println(io)
-    println(io, " Additional Fields:")
+    println(io, " Additional Fields: ")
     println(io)
     println(io, " counts            :   ", result.counts)
     println(io, " iterations        :   ", result.iterations)

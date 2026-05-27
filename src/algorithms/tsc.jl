@@ -32,7 +32,7 @@ end
 function show(io::IO, ::MIME"text/plain", result::TSCResult)
     println(
         io,
-        " TSC Result ($(size(result.embedding, 1)) clusters, $(length(result.assignments)) cluster assignments)",
+        " TSCResult ($(size(result.embedding, 1)) clusters, $(length(result.assignments)) cluster assignments)",
     )
     println(io)
 
@@ -41,19 +41,19 @@ function show(io::IO, ::MIME"text/plain", result::TSCResult)
         string("[", join(result.assignments[1:10], ","), ", ...]") :
         string(result.assignments)
 
-    println(io, " assignments   :   ", assignments_preview)
+    println(io, " assignments       :   ", assignments_preview)
     println(io)
     println(io, " Additional Fields: ")
     println(io)
     println(
         io,
-        " affinity      :   $(size(result.affinity, 1))x$(size(result.affinity, 2)) matrix",
+        " affinity          :   $(size(result.affinity, 1))x$(size(result.affinity, 2)) matrix",
     )
     println(
         io,
-        " embedding     :   $(size(result.embedding, 1))x$(size(result.embedding, 2)) matrix",
+        " embedding         :   $(size(result.embedding, 1))x$(size(result.embedding, 2)) matrix",
     )
-    return println(io, " kmeans_runs   :   ", length(result.kmeans_runs))
+    return println(io, " kmeans_runs       :   ", length(result.kmeans_runs))
 end
 
 # Main function
