@@ -148,13 +148,12 @@ end
 
     output = sprint((io, x) -> show(io, "text/plain", x), result)
 
-    assignments_preview = 
+    assignments_preview =
         length(result.assignments) > 10 ?
         string("[", join(result.assignments[1:10], ","), ", ...]") :
         string(result.assignments)
 
     expected_string = string(
-        
         " KSSResult ($(length(result.counts)) clusters, $(length(result.assignments)) cluster assignments)\n\n",
         " assignments       :   $(assignments_preview)\n\n",
         " Additional Fields: \n\n",
