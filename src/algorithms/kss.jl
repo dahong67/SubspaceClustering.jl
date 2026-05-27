@@ -51,7 +51,7 @@ function show(io::IO, ::MIME"text/plain", result::KSSResult)
     println(io, " iterations        :   ", result.iterations)
     println(io, " converged         :   ", result.converged)
     println(io, " U                 ::  ", typeof(result.U))
-    println(io, " totalcost         ::  ", typeof(result.totalcost))
+    return println(io, " totalcost         ::  ", typeof(result.totalcost))
 end
 
 # Main function

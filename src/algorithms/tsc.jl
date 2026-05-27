@@ -53,7 +53,7 @@ function show(io::IO, ::MIME"text/plain", result::TSCResult)
         io,
         " embedding     :   $(size(result.embedding, 1))x$(size(result.embedding, 2)) matrix",
     )
-    println(io, " kmeans_runs   :   ", length(result.kmeans_runs))
+    return println(io, " kmeans_runs   :   ", length(result.kmeans_runs))
 end
 
 # Main function
