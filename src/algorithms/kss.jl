@@ -11,8 +11,8 @@
 The output of [`kss`](@ref).
 
 # Fields
-- `U::TU`: vector of subspace basis matrices `U[1],...,U[K]`
-- `c::Tc`: vector of cluster assignments `c[1],...,c[N]`
+- `bases::TU`: vector of subspace basis matrices `bases[1],...,bases[K]`
+- `assignments::Tc`: vector of cluster assignments `assignments[1],...,assignments[N]`
 - `iterations::Int`: number of iterations performed
 - `totalcost::T`: final value of total cost function
 - `counts::Vector{Int}`: vector of cluster sizes `counts[1],...,counts[K]`
@@ -23,8 +23,8 @@ struct KSSResult{
     Tc<:AbstractVector{<:Integer},
     T<:Real,
 }
-    U::TU
-    c::Tc
+    bases::TU
+    assignments::Tc
     iterations::Int
     totalcost::T
     counts::Vector{Int}
@@ -44,9 +44,16 @@ Cluster the `N` data points in the `D×N` data matrix `X`
 into `K` clusters via the **K**-**s**ub**s**paces (KSS) algorithm
 with corresponding subspace dimensions `d[1],...,d[K]`.
 Output is a [`KSSResult`](@ref) containing the resulting
-cluster assignments `c[1],...,c[N]`,
-subspace basis matrices `U[1],...,U[K]`,
+cluster assignments `assignments[1],...,assignments[N]`,
+subspace basis matrices `bases[1],...,bases[K]`,
 and metadata about the algorithm run.
+
+For notational convenience, let
+
+- `U = bases`
+- `c = assignments`
+
+where `U[K]` denotes the basis matrix of cluster `K` and `c[i]` denotes the cluster assignment of data point `i`.
 
 KSS seeks to cluster data points by their subspace
 by minimizing the following total cost
