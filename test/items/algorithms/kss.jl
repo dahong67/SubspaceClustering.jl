@@ -9,7 +9,7 @@
         X = randn(rng, T, D, N)
         d = [2, 2]
         result = kss(X, d)
-        U, c = result.U, result.c
+        U, c = result.bases, result.assignments
 
         @test length(U) == length(d)
         @test length(c) == N
@@ -31,7 +31,7 @@ end
         X = randn(rng, T, D, N)
         d = [2, 3, 4]
         result = kss(X, d)
-        U, c = result.U, result.c
+        U, c = result.bases, result.assignments
 
         @test length(U) == length(d)
         @test length(c) == N
@@ -56,7 +56,7 @@ end
         X = U1 * randn(rng, d[1], N)
         U2 = SubspaceClustering.randsubspace(rng, T, D, d[2])
         result = kss(X, d; Uinit = [U1, U2])
-        U, c = result.U, result.c
+        U, c = result.bases, result.assignments
 
         @test isempty(findall(==(2), c))
     end
@@ -76,7 +76,7 @@ end
             hcat(U1 * randn(rng, d[1], N), U2 * randn(rng, d[2], N)) +
             0.01 * randn(rng, D, 2N)
         result = kss(X, d; Uinit = [U1, U2])
-        U, c = result.U, result.c
+        U, c = result.bases, result.assignments
 
         # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
         @test all(c[1:N] .== 1)
