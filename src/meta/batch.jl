@@ -21,7 +21,7 @@ Both K-Subpaces (KSS) and K-Affinespaces (KAS) may get stuck in poor local minim
 See also [`kss`](@ref), [`kas`](@ref).
 """
 function batch(
-    alg::Union{typeof(kss), typeof(kas)},
+    alg::Function,
     X::AbstractMatrix{<:Number},
     d::AbstractVector{<:Integer};
     nruns::Integer = 50,
@@ -29,15 +29,22 @@ function batch(
     showprogress::Bool = false,
 )
     # check number of runs
-    nruns > 0 || throw(ArgumentError("nruns must be positive. Got `nruns=$nruns`"))
+    nruns > 0 || throw(ArgumentError("nruns must be positive. Got `nruns = $nruns`"))
+
+    # Algorithm Check
+    alg in (kss, kas) || throw(
+        ArgumentError(
+            "`batch` currently supports only `kss` and `kas`. Got `alg: $(nameof(alg))`",
+        ),
+    )
 
     runs = @withprogressif showprogress map(1:nruns) do idx
         rng = MersenneTwister(idx)
-        result = alg(X, d; rng=rng, maxiters=maxiters)
+        result = alg(X, d; rng = rng, maxiters = maxiters)
         @logprogressif showprogress idx/nruns
         return result
     end
-    
+
     # Info on number of converged runs
     nconverged = count(run -> run.converged, runs)
     @info "$nconverged/$nruns runs converged"
