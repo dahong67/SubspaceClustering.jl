@@ -7,7 +7,7 @@
     U1 = qr(randn(rng, 5, 2)).Q[:, 1:2]
     U2 = qr(randn(rng, 5, 2)).Q[:, 1:2]
 
-    X = [U1*randn(rng, 2, 20) U2*randn(rng, 2, 20)]
+    X = [U1 * randn(rng, 2, 20) U2 * randn(rng, 2, 20)]
     d = [1, 2]
 
     @testset "invalid nruns" begin
@@ -35,7 +35,7 @@ end
     U1 = qr(randn(rng, D, N)).Q[:, 1:3]
     U2 = qr(randn(rng, D, N)).Q[:, 1:3]
 
-    X = [U1*randn(rng, 3, N) U2*randn(rng, 3, N)]
+    X = [U1 * randn(rng, 3, N) U2 * randn(rng, 3, N)]
 
     result = batch(kss, X, [1, 2]; nruns = 5)
     U = result.U
@@ -58,7 +58,7 @@ end
     U1 = qr(randn(rng, D, N)).Q[:, 1:3]
     U2 = qr(randn(rng, D, N)).Q[:, 1:3]
 
-    X = [U1*randn(rng, 3, N) U2*randn(rng, 3, N)]
+    X = [U1 * randn(rng, 3, N) U2 * randn(rng, 3, N)]
 
     result = batch(kas, X, [1, 2]; nruns = 5)
     U, b = result.U, result.b

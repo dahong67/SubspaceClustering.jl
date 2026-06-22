@@ -41,7 +41,7 @@ function batch(
     runs = @withprogressif showprogress map(1:nruns) do idx
         rng = MersenneTwister(idx)
         result = alg(X, d; rng = rng, maxiters = maxiters)
-        @logprogressif showprogress idx/nruns
+        @logprogressif showprogress idx / nruns
         return result
     end
 
