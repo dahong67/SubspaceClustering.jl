@@ -11,7 +11,7 @@
         end
     end
     logged_progress = [log.kwargs[:progress] for log in logger.logs]
-    @test logged_progress == [nothing; 1/3:1/3:1; "done"]
+    @test logged_progress == [nothing; (1/3):(1/3):1; "done"]
 end
 
 @testitem "@withprogressif false / @logprogressif false" begin
@@ -72,7 +72,7 @@ end
         end
     end
     logged_progress = [log.kwargs[:progress] for log in logger.logs]
-    @test logged_progress == repeat([nothing; 1/2:1/2:1; "done"], 2)
+    @test logged_progress == repeat([nothing; (1/2):(1/2):1; "done"], 2)
     logged_messages = [string(log.message) for log in logger.logs]
     @test all(==("inner"), logged_messages)
 end

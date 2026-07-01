@@ -4,10 +4,10 @@ Subspace clustering module. Provides algorithms for clustering data points by su
 module SubspaceClustering
 
 # Imports
-using ArnoldiMethod: partialschur
+using ArnoldiMethod: partialschur, partialeigen
 using Clustering: KmeansResult, kmeans
 using Compat: Compat, @compat
-using LinearAlgebra: Diagonal, I, Symmetric, mul!, normalize, svd!
+using LinearAlgebra: Diagonal, I, Symmetric, mul!, normalize, normalize!, svd!
 using Logging: @info, @warn
 using ProgressLogging: @logprogress, @withprogress
 using Random: AbstractRNG, default_rng, randn!
