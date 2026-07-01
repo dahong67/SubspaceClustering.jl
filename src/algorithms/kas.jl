@@ -13,9 +13,9 @@
 The output of [`kas`](@ref).
 
 # Fields
-- `U::TU`: vector of affine space basis matrices `U[1],...,U[K]`
-- `b::Tb`: vector of bias vectors `b[1],...,b[K]`
-- `c::Tc`: vector of cluster assignments `c[1],...,c[N]`
+- `bases::TU`: vector of affine space basis matrices `bases[1],...,bases[K]`
+- `biases::Tb`: vector of bias vectors `biases[1],...,biases[K]`
+- `assignments::Tc`: vector of cluster assignments `assignments[1],...,assignments[N]`
 - `iterations::Int`: number of iterations performed
 - `totalcost::T`: final value of total cost function
 - `counts::Vector{Int}`: vector of cluster sizes `counts[1],...,counts[K]`
@@ -28,9 +28,9 @@ struct KASResult{
     Tc<:AbstractVector{<:Integer},
     T<:Real,
 }
-    U::TU
-    b::Tb
-    c::Tc
+    bases::TU
+    biases::Tb
+    assignments::Tc
     iterations::Int
     totalcost::T
     counts::Vector{Int}
@@ -50,10 +50,18 @@ Cluster the `N` data points in the `D×N` data matrix `X`
 into `K` clusters via the **K**-**a**ffine-**s**paces (KAS) algorithm
 with corresponding affine space dimensions `d[1],...,d[K]`.
 Output is a [`KASResult`](@ref) containing the resulting
-cluster assignments `c[1],...,c[N]`,
-affine space basis matrices `U[1],...,U[K]`,
-bias vectors `b[1],...,b[K]`,
+cluster assignments `assignments[1],...,assignments[N]`,
+affine space basis matrices `bases[1],...,bases[K]`,
+bias vectors `biases[1],...,biases[K]`,
 and metadata about the algorithm run.
+
+For notational convenience, let
+
+- `U = bases`
+- `b = biases`
+- `c = assignments`
+
+where `U[K]` denotes the basis matrix of cluster `K`, `b[K]` denotes the bias vector of cluster `K`, and `c[i]` denotes the cluster assignment of data point `i`.
 
 KAS seeks to cluster data points by their affine space
 by minimizing the following total cost
@@ -70,8 +78,8 @@ and bias vectors `b[1],...,b[K]`.
     (used when reinitializing the affine space for an empty cluster)
 - `init::AbstractVector{<:Tuple{<:AbstractMatrix{TUb},<:AbstractVector{TUb}}}
     = [(randsubspace(rng, float(eltype(X)), size(X, 1), di), zeros(float(eltype(X)), size(X, 1))) for di in d]`:
-    vector of `K` initial pair of affine space basis matrices containing `U[1],...,U[K]`
-    and bias vectors containing `b[1],...,b[K]`
+    vector of `K` initial pair of affine space basis matrices containing `bases[1],...,bases[K]`
+    and bias vectors containing `biases[1],...,biases[K]`
     where `TUb` is a floating point type.
 - `showprogress::Bool = false`: whether to log progress during the algorithm run
 

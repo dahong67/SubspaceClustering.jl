@@ -62,14 +62,14 @@ hidedecorations!(ax)
 hidespines!(ax)
 
 # Plot estimated subspaces
-for (j, Uj) in enumerate(result.U)
+for (j, Uj) in enumerate(result.bases)
     ablines!(ax, 0, Uj[2,1]/Uj[1,1];
         color = Cycled(j+1), label = "subspace $j")
 end
 
 # Plot data points
 points = map(1:K) do j
-    scatter!(ax, [Point2f(x[i]) for i in 1:N if result.c[i] == j];
+    scatter!(ax, [Point2f(x[i]) for i in 1:N if result.assignments[i] == j];
         markersize = 6, color = Cycled(j+1))
 end
 
