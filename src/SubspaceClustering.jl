@@ -10,12 +10,12 @@ using Compat: Compat, @compat
 using LinearAlgebra: Diagonal, I, Symmetric, mul!, normalize, svd!
 using Logging: @info, @warn
 using ProgressLogging: @logprogress, @withprogress
-using Random: AbstractRNG, default_rng, randn!
+using Random: AbstractRNG, default_rng, randn!, MersenneTwister
 using SparseArrays: sparse
 using Statistics: mean
 
 # Exports
-export KASResult, kas, KSSResult, kss, TSCResult, tsc
+export KASResult, kas, KSSResult, kss, TSCResult, tsc, batch
 @compat public randsubspace
 
 # Utility functions/macros
@@ -26,5 +26,8 @@ include("utils/progresslogging.jl")
 include("algorithms/kss.jl")
 include("algorithms/kas.jl")
 include("algorithms/tsc.jl")
+
+# Meta-algorithm
+include("meta/batch.jl")
 
 end
