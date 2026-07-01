@@ -12,7 +12,7 @@ The output of [`kss`](@ref).
 
 # Fields
 - `U::TU`: vector of subspace basis matrices `U[1],...,U[K]`
-- `c::Tc`: vector of cluster assignments `c[1],...,c[N]`
+- `assignments::Tc`: vector of cluster assignments `assignments[1],...,assignments[N]`
 - `iterations::Int`: number of iterations performed
 - `totalcost::T`: final value of total cost function
 - `counts::Vector{Int}`: vector of cluster sizes `counts[1],...,counts[K]`
@@ -24,11 +24,34 @@ struct KSSResult{
     T<:Real,
 }
     U::TU
-    c::Tc
+    assignments::Tc
     iterations::Int
     totalcost::T
     counts::Vector{Int}
     converged::Bool
+end
+
+function show(io::IO, ::MIME"text/plain", result::KSSResult)
+    println(
+        io,
+        " KSSResult ($(length(result.counts)) clusters, $(length(result.assignments)) cluster assignments)",
+    )
+    println(io)
+
+    assignments_preview =
+        length(result.assignments) > 10 ?
+        string("[", join(result.assignments[1:10], ","), ", ...]") :
+        string(result.assignments)
+
+    println(io, " assignments       :   ", assignments_preview)
+    println(io)
+    println(io, " Additional Fields: ")
+    println(io)
+    println(io, " counts            :   ", result.counts)
+    println(io, " iterations        :   ", result.iterations)
+    println(io, " converged         :   ", result.converged)
+    println(io, " U                 ::  ", typeof(result.U))
+    return println(io, " totalcost         ::  ", typeof(result.totalcost))
 end
 
 # Main function
@@ -44,16 +67,16 @@ Cluster the `N` data points in the `D×N` data matrix `X`
 into `K` clusters via the **K**-**s**ub**s**paces (KSS) algorithm
 with corresponding subspace dimensions `d[1],...,d[K]`.
 Output is a [`KSSResult`](@ref) containing the resulting
-cluster assignments `c[1],...,c[N]`,
+cluster assignments `assignments[1],...,assignments[N]`,
 subspace basis matrices `U[1],...,U[K]`,
 and metadata about the algorithm run.
 
 KSS seeks to cluster data points by their subspace
 by minimizing the following total cost
 ```math
-\\sum_{i=1}^N \\| X[:, i] - U[c[i]] U[c[i]]' X[:, i] \\|_2^2
+\\sum_{i=1}^N \\| X[:, i] - U[assignments[i]] U[assignments[i]]' X[:, i] \\|_2^2
 ```
-with respect to the cluster assignments `c[1],...,c[N]`
+with respect to the cluster assignments `assignments[1],...,assignments[N]`
 and subspace basis matrices `U[1],...,U[K]`.
 
 # Keyword arguments
@@ -112,10 +135,10 @@ function kss(
 
     # Initialize model parameters
     U = deepcopy(Uinit)
-    c = kss_assign_clusters(U, X)
+    assignments = kss_assign_clusters(U, X)
 
     # Main loop
-    cprev = copy(c)
+    cprev = copy(assignments)
     iterations, converged = 0, false
     log_every = max(1, maxiters ÷ 100)
     @withprogressif showprogress while iterations < maxiters && !converged
@@ -123,7 +146,7 @@ function kss(
 
         # Update subspaces
         for k in 1:K
-            inds = findall(==(k), c)
+            inds = findall(==(k), assignments)
             if !isempty(inds)
                 U[k] = kss_estimate_subspace(view(X, :, inds), d[k])
             else
@@ -133,14 +156,14 @@ function kss(
         end
 
         # Update cluster assignments
-        kss_assign_clusters!(c, U, X)
+        kss_assign_clusters!(assignments, U, X)
 
         # Check for convergence
-        if cprev == c
+        if cprev == assignments
             @info "Converged after $iterations $(iterations == 1 ? "iteration" : "iterations")."
             converged = true
         end
-        copyto!(cprev, c)
+        copyto!(cprev, assignments)
 
         # Log progress
         if iterations % log_every == 0
@@ -149,10 +172,12 @@ function kss(
     end
 
     # Compute final counts and costs
-    counts = [count(==(k), c) for k in 1:K]
-    costs = [sum(abs2, xi) - sum(abs2, U[c[i]]' * xi) for (i, xi) in pairs(eachcol(X))]
+    counts = [count(==(k), assignments) for k in 1:K]
+    costs = [
+        sum(abs2, xi) - sum(abs2, U[assignments[i]]' * xi) for (i, xi) in pairs(eachcol(X))
+    ]
 
-    return KSSResult(U, c, iterations, sum(costs), counts, converged)
+    return KSSResult(U, assignments, iterations, sum(costs), counts, converged)
 end
 
 # Subroutines
@@ -168,19 +193,19 @@ See also [`kss_assign_clusters!`](@ref), [`kss`](@ref).
 kss_assign_clusters(U, X) = kss_assign_clusters!(similar(Vector{Int}, (axes(X, 2),)), U, X)
 
 """
-    kss_assign_clusters!(c, U, X)
+    kss_assign_clusters!(assignments, U, X)
 
 Assign the `N` data points in `X` to the `K` subspaces in `U`,
-update the vector of assignments `c`,
-and return this vector of assignments.
+update the vector `assignments`,
+and returns the final vector of cluster assignments.
 
 See also [`kss_assign_clusters`](@ref), [`kss`](@ref).
 """
-function kss_assign_clusters!(c, U, X)
+function kss_assign_clusters!(assignments, U, X)
     for (i, xi) in pairs(eachcol(X))
-        c[i] = argmax(sum(abs2, U[k]' * xi) for k in eachindex(U))
+        assignments[i] = argmax(sum(abs2, U[k]' * xi) for k in eachindex(U))
     end
-    return c
+    return assignments
 end
 
 """
