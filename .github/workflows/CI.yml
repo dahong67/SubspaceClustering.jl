@@ -23,14 +23,14 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.10'    # minimum supported version
+          - 'min'     # minimum supported version
           - '1'       # latest stable 1.x version
         os:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
@@ -53,7 +53,7 @@ jobs:
       pull-requests: read
       statuses: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
         with:
           version: '1.11.7'
