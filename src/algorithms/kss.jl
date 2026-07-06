@@ -60,11 +60,11 @@ and subspace basis matrices `U[1],...,U[K]`.
 - `maxiters::Integer = 100`: maximum number of iterations
 - `rng::AbstractRNG = default_rng()`: random number generator
     (used when reinitializing the subspace for an empty cluster)
-- `Uinit::AbstractVector{<:AbstractMatrix{T}}
+- `Uinit::AbstractVector{<:AbstractMatrix{<:Number}}
     = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d]`:
     vector of `K` initial subspace basis matrices to use
-    (each `Uinit[k]` should be `D×d[k]` and have eltype `T`
-    where `T` is a floating point type)
+    (each `Uinit[k]` should be `D×d[k]`; numeric inputs are converted to
+    floating point internally)
 - `showprogress::Bool = false`: whether to log progress during the algorithm run
 
 See also [`KSSResult`](@ref).
@@ -74,9 +74,9 @@ function kss(
     d::AbstractVector{<:Integer};
     maxiters::Integer = 100,
     rng::AbstractRNG = default_rng(),
-    Uinit::AbstractVector{
-        <:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}},
-    } = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d],
+    Uinit::AbstractVector{<:AbstractMatrix{<:Number}} = [
+        randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d
+    ],
     showprogress::Bool = false,
 )
     # Require one-based indexing
@@ -111,7 +111,7 @@ function kss(
     )
 
     # Initialize model parameters
-    U = deepcopy(Uinit)
+    U = map(Uk -> float.(Uk), Uinit)
     c = kss_assign_clusters(U, X)
 
     # Main loop

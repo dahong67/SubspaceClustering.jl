@@ -97,7 +97,7 @@ end
 
         # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
         @test all(c[1:N] .== 1)
-        @test all(c[N+1:end] .== 2)
+        @test all(c[(N+1):end] .== 2)
 
         # Confirming the clusters are not empty
         for k in 1:length(d)
@@ -154,4 +154,29 @@ end
         end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
+end
+
+@testitem "Integer init is converted to floating point" begin
+    using LinearAlgebra, StableRNGs
+
+    rng = StableRNG(7)
+    D, N = 5, 20
+    X = randn(rng, D, N)
+    d = [2, 3]
+
+    U1 = rand(rng, 1:5, D, d[1])
+    b1 = rand(rng, 1:5, D)
+    U2 = rand(rng, 1:5, D, d[2])
+    b2 = rand(rng, 1:5, D)
+
+    init = [(U1, b1), (U2, b2)]
+
+    @test all(eltype(Uk) <: Integer && eltype(bk) <: Integer for (Uk, bk) in init)
+
+    result = kas(X, d; init = init)
+
+    @test eltype(result.U[1]) <: AbstractFloat
+    @test eltype(result.b[1]) <: AbstractFloat
+    @test eltype(result.U[2]) <: AbstractFloat
+    @test eltype(result.b[2]) <: AbstractFloat
 end
