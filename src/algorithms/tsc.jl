@@ -100,9 +100,12 @@ function tsc(
 
     # Compute cluster assignments via batched K-means
     @info "Running batched K-means with $kmeans_nruns runs"
+    kmeans_log_every = max(1, kmeans_nruns÷50)
     results = @withprogressif showprogress map(1:kmeans_nruns) do run
         result = kmeans(E, K; rng, kmeans_opts...)
-        @logprogressif showprogress run / kmeans_nruns
+        if run % kmeans_log_every == 0 || run == kmeans_nruns
+            @logprogressif showprogress run / kmeans_nruns
+        end
         return result
     end
 
@@ -138,6 +141,8 @@ function tsc_affinity(
 
     # Compute nonzero values of thresholded similarity matrix Z in chunks
     chunksize = min(max_chunksize, N)
+    nchunks = cld(N, chunksize)
+    chunk_log_every = max(1, nchunks÷100)
     C_buf = similar(Y, N, chunksize)    # buffer for pairwise absolute cosine similarities
     s_buf = Vector{Int}(undef, N)       # buffer for sorting
     chunks = Iterators.partition(1:N, chunksize)
@@ -168,7 +173,9 @@ function tsc_affinity(
         end
 
         # Update progress bar and return
-        @logprogressif showprogress chunk_idx / cld(N, chunksize)
+        if chunk_idx % chunk_log_every==0 || chunk_idx==nchunks
+            @logprogressif showprogress chunk_idx / nchunks
+        end
         return Z_nzs_chunk
     end
     Z_rows = reduce(vcat, getindex.(Z_nzs, :rows))
