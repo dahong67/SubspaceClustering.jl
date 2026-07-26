@@ -147,7 +147,7 @@ end
     rng = StableRNG(6)
     d = fill(2, 3)
     Uinit = [SubspaceClustering.randsubspace(rng, 100, dk) for dk in d]
-    X = reduce(hcat, [Uk*randn(rng, dk, 10) for (Uk, dk) in zip(Uinit, d)])
+    X = reduce(hcat, [Uk * randn(rng, dk, 10) for (Uk, dk) in zip(Uinit, d)])
 
     @testset "verbose=true" begin
         logger = TestLogger(; min_level = Logging.Info)
