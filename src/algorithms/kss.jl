@@ -66,6 +66,7 @@ and subspace basis matrices `U[1],...,U[K]`.
     (each `Uinit[k]` should be `D×d[k]` and have eltype `T`
     where `T` is a floating point type)
 - `showprogress::Bool = false`: whether to log progress during the algorithm run
+- `verbose::Bool = false`: whether to print informational log messages
 
 See also [`KSSResult`](@ref).
 """
@@ -78,6 +79,7 @@ function kss(
         <:AbstractMatrix{<:Union{AbstractFloat,Complex{<:AbstractFloat}}},
     } = [randsubspace(rng, float(eltype(X)), size(X, 1), di) for di in d],
     showprogress::Bool = false,
+    verbose::Bool = false,
 )
     # Require one-based indexing
     Base.require_one_based_indexing(X, d, Uinit)
@@ -137,7 +139,8 @@ function kss(
 
         # Check for convergence
         if cprev == c
-            @info "Converged after $iterations $(iterations == 1 ? "iteration" : "iterations")."
+            verbose &&
+                @info "Converged after $iterations $(iterations == 1 ? "iteration" : "iterations")."
             converged = true
         end
         copyto!(cprev, c)
