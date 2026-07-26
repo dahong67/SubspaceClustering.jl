@@ -80,3 +80,51 @@ end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
+
+@testitem "verbose flag" begin
+    using LinearAlgebra, Logging, StableRNGs, Test
+
+    # Generate data
+    rng = StableRNG(4)
+    kmeans_nruns = 5
+    X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 10) for _ in 1:3])
+
+    @testset "verbose=true" begin
+        logger = TestLogger(; min_level = Logging.Info)
+        with_logger(logger) do
+            return tsc(
+                X,
+                3;
+                verbose = true,
+                rng = StableRNG(4),
+                kmeans_nruns = kmeans_nruns,
+                max_chunksize = 3,
+            )
+        end
+
+        info_logs = filter(l -> l.level == Logging.Info, logger.logs)
+        logged_messages = [string(l.message) for l in info_logs]
+
+        @test logged_messages == [
+            "Forming affinity matrix",
+            "Computing embedding",
+            "Running batched K-means with $kmeans_nruns runs",
+        ]
+    end
+
+    @testset "verbose=false" begin
+        logger = TestLogger(; min_level = Logging.Info)
+        with_logger(logger) do
+            return tsc(
+                X,
+                3;
+                verbose = false,
+                rng = StableRNG(4),
+                kmeans_nruns = kmeans_nruns,
+                max_chunksize = 3,
+            )
+        end
+
+        @test isempty(filter(l -> l.level == Logging.Info, logger.logs))
+    end
+end

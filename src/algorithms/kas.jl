@@ -74,6 +74,7 @@ and bias vectors `b[1],...,b[K]`.
     and bias vectors containing `b[1],...,b[K]`
     where `TUb` is a floating point type.
 - `showprogress::Bool = false`: whether to log progress during the algorithm run
+- `verbose::Bool = false`: whether to print informational log messages
 
 See also [`KASResult`](@ref).
 """
@@ -89,6 +90,7 @@ function kas(
         ) for di in d
     ],
     showprogress::Bool = false,
+    verbose::Bool = false,
 ) where {TUb<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
     # Unpack the initial affine space basis matrices and bias vectors
     Uinit = first.(init)
@@ -162,7 +164,8 @@ function kas(
 
         # Check for convergence
         if cprev == c
-            @info "Converged after $iterations $(iterations == 1 ? "iteration" : "iterations")."
+            verbose &&
+                @info "Converged after $iterations $(iterations == 1 ? "iteration" : "iterations")."
             converged = true
         end
         copyto!(cprev, c)

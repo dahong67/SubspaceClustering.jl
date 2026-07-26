@@ -97,7 +97,7 @@ end
 
         # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
         @test all(c[1:N] .== 1)
-        @test all(c[N+1:end] .== 2)
+        @test all(c[(N+1):end] .== 2)
 
         # Confirming the clusters are not empty
         for k in 1:length(d)
@@ -153,5 +153,36 @@ end
             return kas(X, d; showprogress = false, rng = StableRNG(0), maxiters = 10)
         end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
+    end
+end
+
+@testitem "verbose flag" begin
+    using LinearAlgebra, Logging, StableRNGs, Test
+
+    # Generate Noiseless data from three affine spaces.
+    rng = StableRNG(6)
+    d = fill(2, 3)
+
+    init = [(SubspaceClustering.randsubspace(rng, 100, dk), randn(rng, 100)) for dk in d]
+    X = reduce(hcat, [Uk * randn(rng, dk, 10) .+ bk for ((Uk, bk), dk) in zip(init, d)])
+
+    @testset "verbose=true" begin
+        logger = TestLogger(; min_level = Logging.Info)
+        with_logger(logger) do
+            return kas(X, d; init = init, verbose = true, rng = StableRNG(6))
+        end
+
+        info_logs = filter(l -> l.level == Logging.Info, logger.logs)
+        logged_messages = [string(l.message) for l in info_logs]
+        @test logged_messages == ["Converged after 1 iteration."]
+    end
+
+    @testset "verbose=false" begin
+        logger = TestLogger(; min_level = Logging.Info)
+        with_logger(logger) do
+            return kas(X, d; init = init, verbose = false, rng = StableRNG(6))
+        end
+
+        @test isempty(filter(l -> l.level == Logging.Info, logger.logs))
     end
 end

@@ -139,3 +139,33 @@ end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
+
+@testitem "verbose flag" begin
+    using LinearAlgebra, Logging, StableRNGs, Test
+
+    # Generate Noiseless data from three subspaces
+    rng = StableRNG(6)
+    d = fill(2, 3)
+    Uinit = [SubspaceClustering.randsubspace(rng, 100, dk) for dk in d]
+    X = reduce(hcat, [Uk * randn(rng, dk, 10) for (Uk, dk) in zip(Uinit, d)])
+
+    @testset "verbose=true" begin
+        logger = TestLogger(; min_level = Logging.Info)
+        with_logger(logger) do
+            return kss(X, d; Uinit = Uinit, verbose = true, rng = StableRNG(6))
+        end
+
+        info_logs = filter(l -> l.level == Logging.Info, logger.logs)
+        logged_messages = [string(l.message) for l in info_logs]
+        @test logged_messages == ["Converged after 1 iteration."]
+    end
+
+    @testset "verbose=false" begin
+        logger = TestLogger(; min_level = Logging.Info)
+        with_logger(logger) do
+            return kss(X, d; Uinit = Uinit, verbose = false, rng = StableRNG(6))
+        end
+
+        @test isempty(filter(l -> l.level == Logging.Info, logger.logs))
+    end
+end

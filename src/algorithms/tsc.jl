@@ -59,6 +59,7 @@ via normalized spectral clustering of the graph.
 - `kmeans_nruns::Integer = 10`: number of K-means runs to perform
 - `kmeans_opts = (;)`: additional options for `kmeans`
 - `showprogress::Bool = false`: whether to log progress during the algorithm run
+- `verbose::Bool = false`: whether to print informational log messages
 
 See also [`TSCResult`](@ref), [`tsc_affinity`](@ref), [`tsc_embedding`](@ref).
 """
@@ -71,6 +72,7 @@ function tsc(
     kmeans_nruns::Integer = 10,
     kmeans_opts = (;),
     showprogress::Bool = false,
+    verbose::Bool = false,
 )
     # Validate arguments
     Base.require_one_based_indexing(X)
@@ -91,15 +93,15 @@ function tsc(
     )
 
     # Form affinity matrix
-    @info "Forming affinity matrix"
+    verbose && @info "Forming affinity matrix"
     A = tsc_affinity(X; max_nz, max_chunksize, showprogress)
 
     # Compute embedding
-    @info "Computing embedding"
+    verbose && @info "Computing embedding"
     E = tsc_embedding(A, K)
 
     # Compute cluster assignments via batched K-means
-    @info "Running batched K-means with $kmeans_nruns runs"
+    verbose && @info "Running batched K-means with $kmeans_nruns runs"
     results = @withprogressif showprogress map(1:kmeans_nruns) do run
         result = kmeans(E, K; rng, kmeans_opts...)
         @logprogressif showprogress run / kmeans_nruns
