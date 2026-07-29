@@ -118,7 +118,8 @@ function kss(
     cprev = copy(c)
     iterations, converged = 0, false
     log_every = max(1, maxiters ÷ 100)
-    @withprogressif showprogress while iterations < maxiters && !converged
+    @withprogressif showprogress name = "Running KSS" while iterations < maxiters &&
+                                                               !converged
         iterations += 1
 
         # Update subspaces

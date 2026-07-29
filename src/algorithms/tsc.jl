@@ -100,7 +100,7 @@ function tsc(
 
     # Compute cluster assignments via batched K-means
     @info "Running batched K-means with $kmeans_nruns runs"
-    results = @withprogressif showprogress map(1:kmeans_nruns) do run
+    results = @withprogressif showprogress name = "Running k-means" map(1:kmeans_nruns) do run
         result = kmeans(E, K; rng, kmeans_opts...)
         @logprogressif showprogress run / kmeans_nruns
         return result
@@ -141,7 +141,7 @@ function tsc_affinity(
     C_buf = similar(Y, N, chunksize)    # buffer for pairwise absolute cosine similarities
     s_buf = Vector{Int}(undef, N)       # buffer for sorting
     chunks = Iterators.partition(1:N, chunksize)
-    Z_nzs = @withprogressif showprogress mapreduce(
+    Z_nzs = @withprogressif showprogress name = "Computing affinity matrix" mapreduce(
         vcat,
         enumerate(chunks),
     ) do (chunk_idx, chunk)
