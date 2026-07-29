@@ -143,7 +143,7 @@ function kas(
     iterations, converged = 0, false
     log_every = max(1, maxiters ÷ 100)
     @withprogressif showprogress name = "Running KAS" while iterations < maxiters &&
-                                                               !converged
+                                                            !converged
         iterations += 1
 
         # Update affine space basis matrices and bias vectors

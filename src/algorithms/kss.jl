@@ -119,7 +119,7 @@ function kss(
     iterations, converged = 0, false
     log_every = max(1, maxiters ÷ 100)
     @withprogressif showprogress name = "Running KSS" while iterations < maxiters &&
-                                                               !converged
+                                                            !converged
         iterations += 1
 
         # Update subspaces
