@@ -118,8 +118,8 @@ function kss(
     cprev = copy(c)
     iterations, converged = 0, false
     log_every = max(1, maxiters ÷ 100)
-    @withprogressif showprogress while iterations < maxiters && !converged
-        iterations += 1
+    @withprogressif showprogress for iteration in 1:maxiters
+        iterations = iteration
 
         # Update subspaces
         for k in 1:K
@@ -139,11 +139,12 @@ function kss(
         if cprev == c
             @info "Converged after $iterations $(iterations == 1 ? "iteration" : "iterations")."
             converged = true
+            break
         end
         copyto!(cprev, c)
 
         # Log progress
-        if iterations % log_every == 0
+        if iterations % log_every == 0 || iterations == maxiters
             @logprogressif showprogress iterations / maxiters
         end
     end
