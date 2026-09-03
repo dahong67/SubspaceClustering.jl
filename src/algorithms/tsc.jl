@@ -141,19 +141,33 @@ function tsc_affinity(
     N = size(X, 2)
 
     # Dense or Sparse Affinity Representation
-    use_dense = isnothing(dense) ? _use_dense_affinity(N, max_nz) : dense
+    use_dense = isnothing(dense) ? use_dense_affinity(N, max_nz) : dense
 
     if use_dense
+        if dense == true && !use_dense_affinity(N, max_nz)
+            @warn "Forming a dense affinity matrix for N=$N. Consider using `dense=false` to form a sparse affinity matrix and reduce the risk of running out of memory."
+        end
+        # Compute pairwise absolute cosine similarities
         C = abs.(Y' * Y)
 
+        # Dense thresholded similarity matrix
         Z = zeros(eltype(C), N, N)
+
+        # Maximum number of neighbors retained per point
         q = min(max_nz, N-1)
 
         @withprogressif showprogress for col in 1:N
             c = view(C, :, col)
+
+            # Ignore the self-loop in `c`
             c[col] = -one(eltype(c))
+
+            # Find indices for the `q` largest values in `c`
             inds = partialsortperm(c, 1:q; rev = true)
+
+            # Store the corresponding cosine similarities
             Z[inds, col] .= exp.(-2 .* acos.(min.(view(c, inds), oneunit(eltype(c)))))
+
             @logprogressif showprogress col / N
         end
         return A = Z + Z'
@@ -229,7 +243,12 @@ function tsc_embedding(A, K)
     return E
 end
 
-function _use_dense_affinity(N, max_nz)
+"""
+    use_dense_affinity(N, max_nz)
+
+Determine whether to form a dense affinity matrix when `dense=nothing`, based on the number of data points `N` and the expected density of the affinity matrix given `max_nz` neighbors.
+"""
+function use_dense_affinity(N, max_nz)
     max_dense_size = 1000
     min_density = 0.25
     
