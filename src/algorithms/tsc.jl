@@ -38,7 +38,8 @@ end
         rng = default_rng(),
         kmeans_nruns = 10,
         kmeans_opts = (;),
-        showprogress = false)
+        showprogress = false),
+        dense = nothing
 
 Cluster the `N` data points in the `D×N` data matrix `X` into `K` clusters
 via the **T**hresholding-based **S**ubspace **C**lustering (TSC) algorithm
@@ -59,6 +60,7 @@ via normalized spectral clustering of the graph.
 - `kmeans_nruns::Integer = 10`: number of K-means runs to perform
 - `kmeans_opts = (;)`: additional options for `kmeans`
 - `showprogress::Bool = false`: whether to log progress during the algorithm run
+- `dense::Union{Bool, nothing} = nothing`: whether to form the affinity matrix as dense or sparse
 
 See also [`TSCResult`](@ref), [`tsc_affinity`](@ref), [`tsc_embedding`](@ref).
 """
@@ -71,6 +73,7 @@ function tsc(
     kmeans_nruns::Integer = 10,
     kmeans_opts = (;),
     showprogress::Bool = false,
+    dense::Union{Bool, Nothing} = nothing,
 )
     # Validate arguments
     Base.require_one_based_indexing(X)
@@ -92,7 +95,7 @@ function tsc(
 
     # Form affinity matrix
     @info "Forming affinity matrix"
-    A = tsc_affinity(X; max_nz, max_chunksize, showprogress)
+    A = tsc_affinity(X; max_nz, max_chunksize, showprogress, dense)
 
     # Compute embedding
     @info "Computing embedding"
@@ -131,56 +134,76 @@ function tsc_affinity(
     max_nz = max(2, cld(size(X, 2), 4)),
     max_chunksize = 1000,
     showprogress = false,
+    dense::Union{Bool, Nothing} = nothing
 )
     # Precompute normalized data points and extract needed dims
     Y = mapslices(normalize, X; dims = 1)
     N = size(X, 2)
 
-    # Compute nonzero values of thresholded similarity matrix Z in chunks
-    chunksize = min(max_chunksize, N)
-    C_buf = similar(Y, N, chunksize)    # buffer for pairwise absolute cosine similarities
-    s_buf = Vector{Int}(undef, N)       # buffer for sorting
-    chunks = Iterators.partition(1:N, chunksize)
-    Z_nzs = @withprogressif showprogress mapreduce(
-        vcat,
-        enumerate(chunks),
-    ) do (chunk_idx, chunk)
-        # Compute pairwise absolute cosine similarities for chunk using appropriate buffer
-        C_chunk = length(chunk) == chunksize ? C_buf : similar(Y, N, length(chunk))
-        mul!(C_chunk, Y', view(Y, :, chunk))
-        C_chunk .= abs.(C_chunk)
+    # Dense or Sparse Affinity Representation
+    use_dense = isnothing(dense) ? _use_dense_affinity(N, max_nz) : dense
 
-        # Identify at most `max_nz` largest values to keep for each column `c` in chunk
-        q = min(max_nz, N)
-        Z_nzs_chunk = map(chunk, eachcol(C_chunk)) do col, c
-            # Zero out the self-loop in `c`
-            c[col] = zero(eltype(c))
+    if use_dense
+        C = abs.(Y' * Y)
 
-            # Find indices for the `q` largest values in `c`
-            inds = partialsortperm!(s_buf, c, 1:q; rev = true)
+        Z = zeros(eltype(C), N, N)
+        q = min(max_nz, N-1)
 
-            # Return corresponding rows, columns and values
-            return (;
-                rows = copy(inds),
-                cols = fill(col, q),
-                vals = exp.(-2 .* acos.(min.(view(c, inds), oneunit(eltype(c))))),
-            )
+        @withprogressif showprogress for col in 1:N
+            c = view(C, :, col)
+            c[col] = -one(eltype(c))
+            inds = partialsortperm(c, 1:q; rev = true)
+            Z[inds, col] .= exp.(-2 .* acos.(min.(view(c, inds), oneunit(eltype(c)))))
+            @logprogressif showprogress col / N
         end
+        return A = Z + Z'
+    else
+        # Compute nonzero values of thresholded similarity matrix Z in chunks
+        chunksize = min(max_chunksize, N)
+        C_buf = similar(Y, N, chunksize)    # buffer for pairwise absolute cosine similarities
+        s_buf = Vector{Int}(undef, N)       # buffer for sorting
+        chunks = Iterators.partition(1:N, chunksize)
+        Z_nzs = @withprogressif showprogress mapreduce(
+            vcat,
+            enumerate(chunks),
+        ) do (chunk_idx, chunk)
+            # Compute pairwise absolute cosine similarities for chunk using appropriate buffer
+            C_chunk = length(chunk) == chunksize ? C_buf : similar(Y, N, length(chunk))
+            mul!(C_chunk, Y', view(Y, :, chunk))
+            C_chunk .= abs.(C_chunk)
 
-        # Update progress bar and return
-        @logprogressif showprogress chunk_idx / cld(N, chunksize)
-        return Z_nzs_chunk
+            # Identify at most `max_nz` largest values to keep for each column `c` in chunk
+            q = min(max_nz, N)
+            Z_nzs_chunk = map(chunk, eachcol(C_chunk)) do col, c
+                # Zero out the self-loop in `c`
+                c[col] = zero(eltype(c))
+
+                # Find indices for the `q` largest values in `c`
+                inds = partialsortperm!(s_buf, c, 1:q; rev = true)
+
+                # Return corresponding rows, columns and values
+                return (;
+                    rows = copy(inds),
+                    cols = fill(col, q),
+                    vals = exp.(-2 .* acos.(min.(view(c, inds), oneunit(eltype(c))))),
+                )
+            end
+
+            # Update progress bar and return
+            @logprogressif showprogress chunk_idx / cld(N, chunksize)
+            return Z_nzs_chunk
+        end
+        Z_rows = reduce(vcat, getindex.(Z_nzs, :rows))
+        Z_cols = reduce(vcat, getindex.(Z_nzs, :cols))
+        Z_vals = reduce(vcat, getindex.(Z_nzs, :vals))
+
+        # Form and return affinity matrix corresponding to Z+Z'
+        A_rows = [Z_rows; Z_cols]
+        A_cols = [Z_cols; Z_rows]
+        A_vals = [Z_vals; Z_vals]
+        A = sparse(A_rows, A_cols, A_vals, N, N, +)
+        return A
     end
-    Z_rows = reduce(vcat, getindex.(Z_nzs, :rows))
-    Z_cols = reduce(vcat, getindex.(Z_nzs, :cols))
-    Z_vals = reduce(vcat, getindex.(Z_nzs, :vals))
-
-    # Form and return affinity matrix corresponding to Z+Z'
-    A_rows = [Z_rows; Z_cols]
-    A_cols = [Z_cols; Z_rows]
-    A_vals = [Z_vals; Z_vals]
-    A = sparse(A_rows, A_cols, A_vals, N, N, +)
-    return A
 end
 
 """
@@ -204,4 +227,14 @@ function tsc_embedding(A, K)
 
     # Return the embeddings
     return E
+end
+
+function _use_dense_affinity(N, max_nz)
+    max_dense_size = 1000
+    min_density = 0.25
+    
+    q = min(max_nz, N-1)
+    density = q / max(N-1, 1)
+
+    return N <= max_dense_size && density >= min_density
 end
