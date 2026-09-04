@@ -38,8 +38,8 @@ end
         rng = default_rng(),
         kmeans_nruns = 10,
         kmeans_opts = (;),
-        showprogress = false),
-        dense = nothing
+        showprogress = false,
+        dense = nothing)
 
 Cluster the `N` data points in the `D×N` data matrix `X` into `K` clusters
 via the **T**hresholding-based **S**ubspace **C**lustering (TSC) algorithm
@@ -144,7 +144,7 @@ function tsc_affinity(
     use_dense = isnothing(dense) ? use_dense_affinity(N, max_nz) : dense
 
     if use_dense
-        if dense == true && !use_dense_affinity(N, max_nz)
+        if dense == true && N > 1000
             @warn "Forming a dense affinity matrix for N=$N. Consider using `dense=false` to form a sparse affinity matrix and reduce the risk of running out of memory."
         end
         # Compute pairwise absolute cosine similarities
@@ -187,10 +187,10 @@ function tsc_affinity(
             C_chunk .= abs.(C_chunk)
 
             # Identify at most `max_nz` largest values to keep for each column `c` in chunk
-            q = min(max_nz, N)
+            q = min(max_nz, N-1)
             Z_nzs_chunk = map(chunk, eachcol(C_chunk)) do col, c
                 # Zero out the self-loop in `c`
-                c[col] = zero(eltype(c))
+                c[col] = -one(eltype(c))
 
                 # Find indices for the `q` largest values in `c`
                 inds = partialsortperm!(s_buf, c, 1:q; rev = true)
