@@ -154,7 +154,7 @@ function tsc_affinity(
         Z = zeros(eltype(C), N, N)
 
         # Maximum number of neighbors retained per point
-        q = min(max_nz, N-1)
+        q = min(max_nz, N - 1)
 
         @withprogressif showprogress for col in 1:N
             c = view(C, :, col)
@@ -187,7 +187,7 @@ function tsc_affinity(
             C_chunk .= abs.(C_chunk)
 
             # Identify at most `max_nz` largest values to keep for each column `c` in chunk
-            q = min(max_nz, N-1)
+            q = min(max_nz, N - 1)
             Z_nzs_chunk = map(chunk, eachcol(C_chunk)) do col, c
                 # Zero out the self-loop in `c`
                 c[col] = -one(eltype(c))
@@ -254,8 +254,8 @@ function use_dense_affinity(N, max_nz)
     min_density = 0.25
 
     # Estimate affinity density using at most N-1 neighbors per point
-    q = min(max_nz, N-1)
-    density = q / max(N-1, 1)
+    q = min(max_nz, N - 1)
+    density = q / max(N - 1, 1)
 
     return N <= max_dense_size && density >= min_density
 end

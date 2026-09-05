@@ -86,7 +86,7 @@ end
     using LinearAlgebra, SparseArrays, StableRNGs
 
     rng = StableRNG(7)
-    X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 100) for _ in 1:3])
+    X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 350) for _ in 1:3])
 
     @testset "dense = true" begin
         result = tsc(X, 3; showprogress = false, rng = StableRNG(7), dense = true)
