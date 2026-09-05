@@ -118,6 +118,6 @@ end
             dense = false,
         )
 
-        @test dense_result.affinity ≈ Matrix(sparse_result.affinity)
+        @test dense_result.affinity ≈ sparse_result.affinity
     end
 end
