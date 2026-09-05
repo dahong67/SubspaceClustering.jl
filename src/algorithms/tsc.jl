@@ -249,9 +249,11 @@ end
 Determine whether to form a dense affinity matrix when `dense=nothing`, based on the number of data points `N` and the expected density of the affinity matrix given `max_nz` neighbors.
 """
 function use_dense_affinity(N, max_nz)
+    # Thresholds for automatically selecting the dense affinity representation
     max_dense_size = 1000
     min_density = 0.25
 
+    # Estimate affinity density using at most N-1 neighbors per point
     q = min(max_nz, N-1)
     density = q / max(N-1, 1)
 
