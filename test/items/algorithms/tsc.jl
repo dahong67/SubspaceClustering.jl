@@ -108,7 +108,7 @@ end
     end
 
     @testset "dense and sparse equivalence" begin
-        dense_result = tsc(X, 3; showprogress = false, rng = StableRNG(7), dense = true)
+        dense_result = tsc(X, 3; showprogress = true, rng = StableRNG(7), dense = true)
         sparse_result = tsc(
             X,
             3;
