@@ -156,21 +156,26 @@ function tsc_affinity(
         # Maximum number of neighbors retained per point
         q = min(max_nz, N - 1)
 
-        @withprogressif showprogress for col in 1:N
-            c = view(C, :, col)
+        Z = @withprogressif showprogress begin
+            for col in 1:N
+                c = view(C, :, col)
 
-            # Ignore the self-loop in `c`
-            c[col] = -one(eltype(c))
+                # Ignore the self-loop in `c`
+                c[col] = -one(eltype(c))
 
-            # Find indices for the `q` largest values in `c`
-            inds = partialsortperm(c, 1:q; rev = true)
+                # Find indices for the `q` largest values in `c`
+                inds = partialsortperm(c, 1:q; rev = true)
 
-            # Store the corresponding cosine similarities
-            Z[inds, col] .= exp.(-2 .* acos.(min.(view(c, inds), oneunit(eltype(c)))))
+                # Store the corresponding cosine similarities
+                Z[inds, col] .=
+                    exp.(-2 .* acos.(min.(view(c, inds), oneunit(eltype(c)))))
 
-            @logprogressif showprogress col / N
+                @logprogressif showprogress col / N
+            end
+            Z
         end
-        return A = Z + Z'
+
+        return Z + Z'
     else
         # Compute nonzero values of thresholded similarity matrix Z in chunks
         chunksize = min(max_chunksize, N)
