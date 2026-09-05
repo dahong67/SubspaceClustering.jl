@@ -57,7 +57,7 @@ end
                 rng = StableRNG(4),
                 kmeans_nruns = 5,
                 max_chunksize = 3,
-                dense=false,
+                dense = false,
             )
         end
         progress_logs = filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs)
@@ -89,20 +89,34 @@ end
     X = reduce(hcat, [svd(randn(rng, 100, 2)).U * randn(rng, 2, 100) for _ in 1:3])
 
     @testset "dense = true" begin
-        result = tsc(X, 3; showprogress = false, rng = StableRNG(7), dense=true)
+        result = tsc(X, 3; showprogress = false, rng = StableRNG(7), dense = true)
 
         @test result.affinity isa Matrix
     end
 
     @testset "dense = false" begin
-        result = tsc(X, 3; showprogress = false, max_chunksize=50, rng = StableRNG(7), dense=false)
+        result = tsc(
+            X,
+            3;
+            showprogress = false,
+            max_chunksize = 50,
+            rng = StableRNG(7),
+            dense = false,
+        )
 
         @test issparse(result.affinity)
     end
 
     @testset "dense and sparse equivalence" begin
-        dense_result = tsc(X, 3; showprogress = false, rng = StableRNG(7), dense=true)
-        sparse_result = tsc(X, 3; showprogress = false, max_chunksize=50, rng = StableRNG(7), dense=false)
+        dense_result = tsc(X, 3; showprogress = false, rng = StableRNG(7), dense = true)
+        sparse_result = tsc(
+            X,
+            3;
+            showprogress = false,
+            max_chunksize = 50,
+            rng = StableRNG(7),
+            dense = false,
+        )
 
         @test dense_result.affinity ≈ Matrix(sparse_result.affinity)
     end

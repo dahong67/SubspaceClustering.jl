@@ -73,7 +73,7 @@ function tsc(
     kmeans_nruns::Integer = 10,
     kmeans_opts = (;),
     showprogress::Bool = false,
-    dense::Union{Bool, Nothing} = nothing,
+    dense::Union{Bool,Nothing} = nothing,
 )
     # Validate arguments
     Base.require_one_based_indexing(X)
@@ -134,7 +134,7 @@ function tsc_affinity(
     max_nz = max(2, cld(size(X, 2), 4)),
     max_chunksize = 1000,
     showprogress = false,
-    dense::Union{Bool, Nothing} = nothing
+    dense::Union{Bool,Nothing} = nothing,
 )
     # Precompute normalized data points and extract needed dims
     Y = mapslices(normalize, X; dims = 1)
@@ -251,7 +251,7 @@ Determine whether to form a dense affinity matrix when `dense=nothing`, based on
 function use_dense_affinity(N, max_nz)
     max_dense_size = 1000
     min_density = 0.25
-    
+
     q = min(max_nz, N-1)
     density = q / max(N-1, 1)
 
