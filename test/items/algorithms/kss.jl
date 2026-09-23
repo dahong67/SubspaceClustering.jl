@@ -139,3 +139,25 @@ end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
+
+@testitem "Track changed clusters" begin
+    U = [
+        reshape([1.0, 0.0, 0.0], 3, 1),
+        reshape([0.0, 1.0, 0.0], 3, 1),
+        reshape([0.0, 0.0, 1.0], 3, 1),
+    ]
+
+    X = [
+        1.0 0.0 0.0
+        0.0 1.0 0.0
+        0.0 0.0 1.0
+    ]
+
+    c = [1, 1, 3]
+    changed = trues(3)
+
+    SubspaceClustering.kss_assign_clusters!(c, U, X, changed)
+
+    @test c == [1, 2, 3]
+    @test changed == [true, true, false]
+end

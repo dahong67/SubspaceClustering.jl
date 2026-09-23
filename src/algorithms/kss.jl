@@ -115,7 +115,7 @@ function kss(
     c = kss_assign_clusters(U, X)
 
     # Main loop
-    cprev = copy(c)
+    changed = trues(K)
     iterations, converged = 0, false
     log_every = max(1, maxiters ÷ 100)
     @withprogressif showprogress while iterations < maxiters && !converged
@@ -123,7 +123,10 @@ function kss(
 
         # Update subspaces
         for k in 1:K
+            changed[k] || continue
+
             inds = findall(==(k), c)
+
             if !isempty(inds)
                 U[k] = kss_estimate_subspace(view(X, :, inds), d[k])
             else
@@ -133,14 +136,13 @@ function kss(
         end
 
         # Update cluster assignments
-        kss_assign_clusters!(c, U, X)
+        kss_assign_clusters!(c, U, X, changed)
 
         # Check for convergence
-        if cprev == c
+        if !any(changed)
             @info "Converged after $iterations $(iterations == 1 ? "iteration" : "iterations")."
             converged = true
         end
-        copyto!(cprev, c)
 
         # Log progress
         if iterations % log_every == 0
@@ -180,6 +182,33 @@ function kss_assign_clusters!(c, U, X)
     for (i, xi) in pairs(eachcol(X))
         c[i] = argmax(sum(abs2, U[k]' * xi) for k in eachindex(U))
     end
+    return c
+end
+
+"""
+    kss_assign_clusters!(c, U, X, changed)
+
+Assign each data point in `X` to a subspace in `U` and update `c`.
+Set `changed[k]` to true when cluster `k` gains or loses a member.
+
+Return the updated vector assignment `c`.
+
+See also [`kss_assign_clusters`](@ref), [`kss`](@ref).
+"""
+function kss_assign_clusters!(c, U, X, changed)
+    fill!(changed, false)
+
+    for (i, xi) in pairs(eachcol(X))
+        old_assignment = c[i]
+        new_assignment = argmax(sum(abs2, U[k]' * xi) for k in eachindex(U))
+
+        if old_assignment != new_assignment
+            changed[old_assignment] = true
+            changed[new_assignment] = true
+            c[i] = new_assignment
+        end
+    end
+
     return c
 end
 
