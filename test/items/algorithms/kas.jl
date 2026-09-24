@@ -97,7 +97,7 @@ end
 
         # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
         @test all(c[1:N] .== 1)
-        @test all(c[N+1:end] .== 2)
+        @test all(c[(N+1):end] .== 2)
 
         # Confirming the clusters are not empty
         for k in 1:length(d)
@@ -154,4 +154,26 @@ end
         end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
+end
+
+@testitem "Track changed clusters" begin
+    # Zero-dimensional affine space, each data point is represented only by its bias vector. 
+    U = [zeros(2, 0) for _ in 1:3]
+
+    b = [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]]
+
+    X = [
+        0.0 1.0 0.0
+        0.0 0.0 1.0
+    ]
+
+    c = [1, 1, 3]
+
+    # Initialize all flags to true to verify that the function resets them
+    changed = trues(3)
+
+    SubspaceClustering.kas_assign_clusters!(c, U, b, X, changed)
+
+    @test c == [1, 2, 3]
+    @test changed == [true, true, false]
 end
