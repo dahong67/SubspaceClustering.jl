@@ -223,6 +223,8 @@ See also [`kas`](@ref).
 """
 function kas_estimate_affinespace(Xk, dk)
     bhat = mean(eachcol(Xk))
+    dk == 0 && return Matrix{float(eltype(Xk))}(undef, size(Xk, 1), 0), bhat
+
     Uhat = svd!(Xk .- bhat; full = true).U[:, 1:dk]
     return Uhat, bhat
 end

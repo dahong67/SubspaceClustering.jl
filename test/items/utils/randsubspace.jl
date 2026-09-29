@@ -79,3 +79,11 @@ end
     @test size(U) == (5, 3)
     @test isapprox(U' * U, I)
 end
+
+@testitem "Zero-dimensional random subspace" begin
+    for T in (Float64, ComplexF64)
+        U = SubspaceClustering.randsubspace(T, 3, 0)
+        @test size(U) == (3, 0)
+        @test SubspaceClustering.randsubspace!(U) === U
+    end
+end

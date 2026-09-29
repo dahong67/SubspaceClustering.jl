@@ -191,6 +191,8 @@ Return `dk`-dimensional subspace that best fits the data points in `Xk`.
 See also [`kss`](@ref).
 """
 function kss_estimate_subspace(Xk, dk)
+    dk == 0 && return Matrix{float(eltype(Xk))}(undef, size(Xk, 1), 0)
+
     decomp, history = partialschur(Xk * Xk'; nev = dk, which = :LR)
     history.converged ||
         @warn "Iterative algorithm for subspace update did not converge - results may be inaccurate."

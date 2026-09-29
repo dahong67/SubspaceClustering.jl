@@ -51,6 +51,9 @@ function randsubspace!(
         ),
     )
 
+    # Zero-dimensional subspace has an empty basis
+    isempty(U) && return U
+
     # Generate random subspace
     randn!(rng, U)
     P, _, Q = svd!(U)

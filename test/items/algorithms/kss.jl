@@ -139,3 +139,23 @@ end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
     end
 end
+
+@testitem "Zero-dimensional subspace" begin
+    for T in (Float64, ComplexF64)
+        X = T[
+            0 0 3 4
+            0 0 0 0
+        ]
+        # Zero dimensional subspace
+        U0 = Matrix{T}(undef, 2, 0)
+
+        # One-dimensional subspace
+        U1 = reshape(T[1, 0], 2, 1)
+
+        result = kss(X, [0, 1]; Uinit = [U0, U1])
+
+        @test size(result.U[1]) == (2, 0)
+        @test result.c == [1, 1, 2, 2]
+        @test result.counts == [2, 2]
+    end
+end

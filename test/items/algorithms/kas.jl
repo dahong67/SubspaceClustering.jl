@@ -97,7 +97,7 @@ end
 
         # Checking all the points in X1 are assigned to cluster 1 and all the points in X2 are assigned to cluster 2
         @test all(c[1:N] .== 1)
-        @test all(c[N+1:end] .== 2)
+        @test all(c[(N+1):end] .== 2)
 
         # Confirming the clusters are not empty
         for k in 1:length(d)
@@ -153,5 +153,23 @@ end
             return kas(X, d; showprogress = false, rng = StableRNG(0), maxiters = 10)
         end
         @test isempty(filter(l -> l.level == ProgressLogging.ProgressLevel, logger.logs))
+    end
+end
+
+@testitem "Zero-dimensional affine space" begin
+    for T in (Float64, ComplexF64)
+        X = T[
+            1 1 4 4
+            2 2 5 5
+        ]
+        U0 = Matrix{T}(undef, 2, 0)
+        U1 = reshape(T[0, 1], 2, 1)
+
+        result = kas(X, [0, 1]; init = [(U0, T[1, 2]), (U1, T[4, 0])])
+
+        @test size(result.U[1]) == (2, 0)
+        @test size(result.U[2]) == (2, 1)
+        @test result.c == [1, 1, 2, 2]
+        @test result.counts == [2, 2]
     end
 end
